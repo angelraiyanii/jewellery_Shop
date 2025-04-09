@@ -14,6 +14,7 @@ export class AdUser extends Component {
       successMessage: null,
       showUserForm: false,
       showUpdateFormUser: false,
+      searchQuery: "", // Added search query state
       formData: {
         fullname: "",
         email: "",
@@ -46,6 +47,11 @@ export class AdUser extends Component {
         console.error(error);
       });
   }
+
+  // Handle search input change
+  handleSearchChange = (e) => {
+    this.setState({ searchQuery: e.target.value });
+  };
 
   showUserView = (user) => {
     this.setState({ selectedUser: user, showUserView: true });
@@ -101,11 +107,13 @@ export class AdUser extends Component {
         mobile: user.mobile || "",
         gender: user.gender || "",
         address: user.address || "",
-        password: user.password || "", 
+        password: user.password || "",
         pincode: user.pincode || "",
-        profilePic: null, 
+        profilePic: null,
       },
-      imagePreview: user.profilePic ? `http://localhost:5000/public/images/profile_pictures/${user.profilePic}` : null,
+      imagePreview: user.profilePic
+        ? `http://localhost:5000/public/images/profile_pictures/${user.profilePic}`
+        : null,
     });
   };
 
@@ -146,13 +154,15 @@ export class AdUser extends Component {
 
     if (!formData.address) errors.address = "Address is required.";
 
-    if (!showUpdateFormUser && !formData.password) errors.password = "Password is required."; // Optional for update
+    if (!showUpdateFormUser && !formData.password)
+      errors.password = "Password is required."; // Optional for update
 
     if (!formData.pincode) errors.pincode = "Pincode is required.";
     else if (!/^\d{6}$/.test(formData.pincode))
       errors.pincode = "Pincode must be a 6-digit number.";
 
-    if (!showUpdateFormUser && !formData.profilePic) errors.profilePic = "Profile image is required."; // Optional for update
+    if (!showUpdateFormUser && !formData.profilePic)
+      errors.profilePic = "Profile image is required."; // Optional for update
 
     return errors;
   };
@@ -244,7 +254,9 @@ export class AdUser extends Component {
               onChange={this.handleChange}
               placeholder="Enter your full name"
             />
-            {errors.fullname && <div className="invalid-feedback">{errors.fullname}</div>}
+            {errors.fullname && (
+              <div className="invalid-feedback">{errors.fullname}</div>
+            )}
           </div>
           <div className="col-md-6 mb-3">
             <label className="form-label fw-bold">Email</label>
@@ -256,7 +268,9 @@ export class AdUser extends Component {
               onChange={this.handleChange}
               placeholder="Enter your email"
             />
-            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+            {errors.email && (
+              <div className="invalid-feedback">{errors.email}</div>
+            )}
           </div>
         </div>
         <div className="row">
@@ -270,7 +284,9 @@ export class AdUser extends Component {
               onChange={this.handleChange}
               placeholder="Enter your mobile number"
             />
-            {errors.mobile && <div className="invalid-feedback">{errors.mobile}</div>}
+            {errors.mobile && (
+              <div className="invalid-feedback">{errors.mobile}</div>
+            )}
           </div>
           <div className="col-md-6 mb-3">
             <label className="form-label fw-bold">Gender</label>
@@ -284,7 +300,9 @@ export class AdUser extends Component {
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
-            {errors.gender && <div className="invalid-feedback">{errors.gender}</div>}
+            {errors.gender && (
+              <div className="invalid-feedback">{errors.gender}</div>
+            )}
           </div>
         </div>
         <div className="mb-3">
@@ -297,7 +315,9 @@ export class AdUser extends Component {
             placeholder="Enter your address"
             rows="2"
           />
-          {errors.address && <div className="invalid-feedback">{errors.address}</div>}
+          {errors.address && (
+            <div className="invalid-feedback">{errors.address}</div>
+          )}
         </div>
         <div className="row">
           <div className="col-md-6 mb-3">
@@ -310,7 +330,9 @@ export class AdUser extends Component {
               onChange={this.handleChange}
               placeholder="Enter your password"
             />
-            {errors.password && <div className="invalid-feedback">{errors.password}</div>}
+            {errors.password && (
+              <div className="invalid-feedback">{errors.password}</div>
+            )}
           </div>
           <div className="col-md-6 mb-3">
             <label className="form-label fw-bold">Pincode</label>
@@ -322,7 +344,9 @@ export class AdUser extends Component {
               onChange={this.handleChange}
               placeholder="Enter your pincode"
             />
-            {errors.pincode && <div className="invalid-feedback">{errors.pincode}</div>}
+            {errors.pincode && (
+              <div className="invalid-feedback">{errors.pincode}</div>
+            )}
           </div>
         </div>
         <div className="mb-3">
@@ -333,9 +357,16 @@ export class AdUser extends Component {
             className={`form-control ${errors.profilePic ? "is-invalid" : ""}`}
             onChange={this.handleFileChange}
           />
-          {errors.profilePic && <div className="invalid-feedback">{errors.profilePic}</div>}
+          {errors.profilePic && (
+            <div className="invalid-feedback">{errors.profilePic}</div>
+          )}
           {imagePreview && (
-            <img src={imagePreview} alt="Preview" className="mt-3 img-thumbnail" width="100" />
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="mt-3 img-thumbnail"
+              width="100"
+            />
           )}
         </div>
         <button type="submit" className="btn btn-primary w-50">
@@ -351,27 +382,53 @@ export class AdUser extends Component {
   };
 
   render() {
-    const { Login, showUserView, selectedUser, error, successMessage } = this.state;
+    const {
+      Login,
+      showUserView,
+      selectedUser,
+      error,
+      successMessage,
+      searchQuery,
+    } = this.state;
+
+    // Filter users based on search query
+    const filteredUsers = Login.filter(
+      (user) =>
+        user.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
       <center>
         <div className="container mt-4">
+        <h2 className="text-center mb-4">Manage Users</h2>
           <div className="d-flex justify-content-between mb-3">
+            
             <div className="d-flex">
-              <input type="text" className="form-control me-2" placeholder="Search users..." />
-              <button className="btn btn-primary">Search</button>
+              <input
+                type="text"
+                className="form-control me-2"
+                placeholder="🔎Search users..."
+                value={searchQuery}
+                onChange={this.handleSearchChange}
+              />
             </div>
             <button className="btn btn-success" onClick={this.showUserForm}>
               Add User
             </button>
           </div>
-          {successMessage && <p className="text-success text-center">{successMessage}</p>}
+          {successMessage && (
+            <p className="text-success text-center">{successMessage}</p>
+          )}
           {error && <p className="text-danger text-center">{error}</p>}
         </div>
 
         {this.state.showUserForm && (
           <div className="container d-flex justify-content-center align-items-center">
-            <div className="card shadow-lg p-4 w-100" style={{ maxWidth: "600px" }}>
+            <div
+              className="card shadow-lg p-4 w-100"
+              style={{ maxWidth: "600px" }}
+            >
               <h2 className="text-center mb-2">Add User</h2>
               {this.renderForm()}
             </div>
@@ -380,7 +437,10 @@ export class AdUser extends Component {
 
         {this.state.showUpdateFormUser && (
           <div className="container d-flex justify-content-center align-items-center">
-            <div className="card shadow-lg p-4 w-100" style={{ maxWidth: "600px" }}>
+            <div
+              className="card shadow-lg p-4 w-100"
+              style={{ maxWidth: "600px" }}
+            >
               <h2 className="text-center mb-2">Update User</h2>
               {this.renderForm()}
             </div>
@@ -388,7 +448,7 @@ export class AdUser extends Component {
         )}
 
         <div className="container mt-5">
-          <h2 className="text-center mb-4">Manage Users</h2>
+       
           <div className="table-responsive">
             <table className="table table-bordered text-center align-middle">
               <thead className="table table-bordered">
@@ -403,14 +463,14 @@ export class AdUser extends Component {
                 </tr>
               </thead>
               <tbody>
-                {Login.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="text-center text-muted">
                       No users found.
                     </td>
                   </tr>
                 ) : (
-                  Login.map((user, index) => (
+                  filteredUsers.map((user, index) => (
                     <React.Fragment key={user._id}>
                       <tr>
                         <td>{index + 1}</td>
@@ -418,13 +478,18 @@ export class AdUser extends Component {
                         <td>{user.email}</td>
                         <td
                           className={
-                            user.status === "Active" ? "text-success fw-bold" : "text-danger fw-bold"
+                            user.status === "Active"
+                              ? "text-success fw-bold"
+                              : "text-danger fw-bold"
                           }
                         >
                           {user.status}
                         </td>
                         <td>
-                          <button className="btn btn-info" onClick={() => this.showUserView(user)}>
+                          <button
+                            className="btn btn-info"
+                            onClick={() => this.showUserView(user)}
+                          >
                             View
                           </button>
                         </td>
@@ -437,54 +502,73 @@ export class AdUser extends Component {
                           </button>
                         </td>
                         <td>
-                          <button className="btn btn-danger" onClick={() => this.handleDelete(user._id)}>
+                          <button
+                            className="btn btn-danger"
+                            onClick={() => this.handleDelete(user._id)}
+                          >
                             Delete
                           </button>
                         </td>
                       </tr>
-                      {showUserView && selectedUser && selectedUser._id === user._id && (
-                        <tr>
-                          <td colSpan="7">
-                            <div className="d-flex justify-content-center">
-                              <div className="container mt-4">
-                                <div className="row shadow p-4 rounded">
-                                  <div className="col-md-4 text-center">
-                                    <img
-                                      src={
-                                        selectedUser.profilePic
-                                          ? `http://localhost:5000/public/images/profile_pictures/${selectedUser.profilePic}`
-                                          : u1
-                                      }
-                                      alt="User Profile"
-                                      className="img-fluid rounded-circle"
-                                      style={{ width: "220px", height: "230px", objectFit: "cover" }}
-                                    />
-                                    <h4 className="mt-3">{selectedUser.fullname}</h4>
-                                    <p className="text-muted">{selectedUser.email}</p>
-                                  </div>
-                                  <div className="col-md-8">
-                                    <fieldset className="border p-3 rounded">
-                                      <h5 style={{ color: "#41566E" }}>Personal Information</h5>
-                                      <p>
-                                        <strong>Gender:</strong> {selectedUser.gender}
+                      {showUserView &&
+                        selectedUser &&
+                        selectedUser._id === user._id && (
+                          <tr>
+                            <td colSpan="7">
+                              <div className="d-flex justify-content-center">
+                                <div className="container mt-4">
+                                  <div className="row shadow p-4 rounded">
+                                    <div className="col-md-4 text-center">
+                                      <img
+                                        src={
+                                          selectedUser.profilePic
+                                            ? `http://localhost:5000/public/images/profile_pictures/${selectedUser.profilePic}`
+                                            : u1
+                                        }
+                                        alt="User Profile"
+                                        className="img-fluid rounded-circle"
+                                        style={{
+                                          width: "220px",
+                                          height: "230px",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                      <h4 className="mt-3">
+                                        {selectedUser.fullname}
+                                      </h4>
+                                      <p className="text-muted">
+                                        {selectedUser.email}
                                       </p>
-                                      <p>
-                                        <strong>Phone:</strong> {selectedUser.mobile}
-                                      </p>
-                                      <p>
-                                        <strong>Address:</strong> {selectedUser.address}
-                                      </p>
-                                      <p>
-                                        <strong>Pin Code:</strong> {selectedUser.pincode}
-                                      </p>
-                                    </fieldset>
+                                    </div>
+                                    <div className="col-md-8">
+                                      <fieldset className="border p-3 rounded">
+                                        <h5 style={{ color: "#41566E" }}>
+                                          Personal Information
+                                        </h5>
+                                        <p>
+                                          <strong>Gender:</strong>{" "}
+                                          {selectedUser.gender}
+                                        </p>
+                                        <p>
+                                          <strong>Phone:</strong>{" "}
+                                          {selectedUser.mobile}
+                                        </p>
+                                        <p>
+                                          <strong>Address:</strong>{" "}
+                                          {selectedUser.address}
+                                        </p>
+                                        <p>
+                                          <strong>Pin Code:</strong>{" "}
+                                          {selectedUser.pincode}
+                                        </p>
+                                      </fieldset>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
+                            </td>
+                          </tr>
+                        )}
                     </React.Fragment>
                   ))
                 )}

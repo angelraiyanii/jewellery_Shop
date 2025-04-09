@@ -32,7 +32,9 @@ const AdOffers = () => {
     try {
       setIsLoading(true);
       const response = await axios.get("http://localhost:5000/api/OfferModel/");
-      const offerList = Array.isArray(response.data) ? response.data : response.data.data;
+      const offerList = Array.isArray(response.data)
+        ? response.data
+        : response.data.data;
       setOffers(offerList);
       setIsLoading(false);
     } catch (error) {
@@ -47,18 +49,24 @@ const AdOffers = () => {
   const validateForm = () => {
     let tempErrors = {};
     if (!formData.title.trim()) tempErrors.title = "Title is required.";
-    if (!formData.description.trim()) tempErrors.description = "Description is required.";
-    if (!formData.maxdiscount.trim()) tempErrors.maxdiscount = "Maximum Discount Amount is required.";
+    if (!formData.description.trim())
+      tempErrors.description = "Description is required.";
+    if (!formData.maxdiscount.trim())
+      tempErrors.maxdiscount = "Maximum Discount Amount is required.";
     if (!formData.rate.trim()) tempErrors.rate = "Rate is required.";
-    else if (!/^\d+%$/.test(formData.rate)) tempErrors.rate = "Rate should be in percentage format (e.g., 30%).";
+    else if (!/^\d+%$/.test(formData.rate))
+      tempErrors.rate = "Rate should be in percentage format (e.g., 30%).";
     if (!formData.startDate) tempErrors.startDate = "Start Date is required.";
     if (!formData.endDate) tempErrors.endDate = "End Date is required.";
     else {
       const today = new Date().toISOString().split("T")[0];
-      if (formData.endDate < today && !isEditMode) tempErrors.endDate = "Date cannot be in the past.";
+      if (formData.endDate < today && !isEditMode)
+        tempErrors.endDate = "Date cannot be in the past.";
     }
-    if (!formData.orderTotal.trim()) tempErrors.orderTotal = "Order Total is required.";
-    if (!isEditMode && !formData.banner.trim()) tempErrors.banner = "Banner is required.";
+    if (!formData.orderTotal.trim())
+      tempErrors.orderTotal = "Order Total is required.";
+    if (!isEditMode && !formData.banner.trim())
+      tempErrors.banner = "Banner is required.";
 
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -77,11 +85,17 @@ const AdOffers = () => {
             formData
           );
           if (response.data.success) {
-            setMessage({ text: "Offer updated successfully!", type: "success" });
+            setMessage({
+              text: "Offer updated successfully!",
+              type: "success",
+            });
             fetchOffers();
           }
         } else {
-          response = await axios.post("http://localhost:5000/api/offers/add", formData);
+          response = await axios.post(
+            "http://localhost:5000/api/offers/add",
+            formData
+          );
           if (response.data.success) {
             setMessage({ text: "Offer added successfully!", type: "success" });
             fetchOffers();
@@ -90,7 +104,9 @@ const AdOffers = () => {
         resetForm();
       } catch (error) {
         setMessage({
-          text: `Failed to ${isEditMode ? "update" : "add"} offer: ${error.response?.data?.message || error.message}`,
+          text: `Failed to ${isEditMode ? "update" : "add"} offer: ${
+            error.response?.data?.message || error.message
+          }`,
           type: "danger",
         });
       } finally {
@@ -111,8 +127,12 @@ const AdOffers = () => {
         description: offerToEdit.description,
         maxdiscount: offerToEdit.maxdiscount || "",
         rate: offerToEdit.discount || "",
-        startDate: formatDate(offerToEdit.startDate || offerToEdit.validity || new Date()),
-        endDate: formatDate(offerToEdit.endDate || offerToEdit.validity || new Date()),
+        startDate: formatDate(
+          offerToEdit.startDate || offerToEdit.validity || new Date()
+        ),
+        endDate: formatDate(
+          offerToEdit.endDate || offerToEdit.validity || new Date()
+        ),
         orderTotal: offerToEdit.orderTotal || "",
         banner: offerToEdit.banner || "",
       });
@@ -126,14 +146,18 @@ const AdOffers = () => {
     if (window.confirm("Are you sure you want to delete this offer?")) {
       try {
         setIsLoading(true);
-        const response = await axios.delete(`http://localhost:5000/api/offers/delete/${id}`);
+        const response = await axios.delete(
+          `http://localhost:5000/api/offers/delete/${id}`
+        );
         if (response.data.success) {
           setMessage({ text: "Offer deleted successfully!", type: "success" });
           fetchOffers();
         }
       } catch (error) {
         setMessage({
-          text: "Failed to delete offer: " + (error.response?.data?.message || error.message),
+          text:
+            "Failed to delete offer: " +
+            (error.response?.data?.message || error.message),
           type: "danger",
         });
       } finally {
@@ -175,13 +199,25 @@ const AdOffers = () => {
   const handleView = (id) => {
     setExpandedOfferId(expandedOfferId === id ? null : id); // Toggle: expand if collapsed, collapse if expanded
   };
-
+  const filteredOffers = offers.filter((offer) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      offer.title?.toLowerCase().includes(searchLower) ||
+      offer.description?.toLowerCase().includes(searchLower) ||
+      offer.discount?.toLowerCase().includes(searchLower) ||
+      offer.maxdiscount?.toString().toLowerCase().includes(searchLower) ||
+      offer.orderTotal?.toString().toLowerCase().includes(searchLower)
+    );
+  });
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">Admin Offers</h2>
 
       {message.text && (
-        <div className={`alert alert-${message.type} alert-dismissible fade show`} role="alert">
+        <div
+          className={`alert alert-${message.type} alert-dismissible fade show`}
+          role="alert"
+        >
           {message.text}
           <button
             type="button"
@@ -196,11 +232,10 @@ const AdOffers = () => {
           <input
             type="text"
             className="form-control me-2"
-            placeholder="Search offers..."
+            placeholder="🔎Search offers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button className="btn btn-primary">Search</button>
         </div>
         <button
           className="btn btn-success"
@@ -212,7 +247,11 @@ const AdOffers = () => {
             }
           }}
         >
-          {showForm ? (isEditMode ? "Cancel Edit" : "Close Add Offer Form") : "Add New Offer"}
+          {showForm
+            ? isEditMode
+              ? "Cancel Edit"
+              : "Close Add Offer Form"
+            : "Add New Offer"}
         </button>
       </div>
 
@@ -230,12 +269,16 @@ const AdOffers = () => {
                   value={formData.title}
                   onChange={handleInputChange}
                 />
-                {errors.title && <div className="invalid-feedback">{errors.title}</div>}
+                {errors.title && (
+                  <div className="invalid-feedback">{errors.title}</div>
+                )}
               </div>
               <div className="col-4 mb-2">
                 <label>Description:</label>
                 <textarea
-                  className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.description ? "is-invalid" : ""
+                  }`}
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
@@ -254,7 +297,9 @@ const AdOffers = () => {
                   onChange={handleInputChange}
                   placeholder="e.g., 30%"
                 />
-                {errors.rate && <div className="invalid-feedback">{errors.rate}</div>}
+                {errors.rate && (
+                  <div className="invalid-feedback">{errors.rate}</div>
+                )}
               </div>
             </div>
             <div className="row">
@@ -262,7 +307,9 @@ const AdOffers = () => {
                 <label>Maximum Discount Amount:</label>
                 <input
                   type="text"
-                  className={`form-control ${errors.maxdiscount ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.maxdiscount ? "is-invalid" : ""
+                  }`}
                   name="maxdiscount"
                   value={formData.maxdiscount}
                   onChange={handleInputChange}
@@ -275,7 +322,9 @@ const AdOffers = () => {
                 <label>Order Total:</label>
                 <input
                   type="text"
-                  className={`form-control ${errors.orderTotal ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.orderTotal ? "is-invalid" : ""
+                  }`}
                   name="orderTotal"
                   value={formData.orderTotal}
                   onChange={handleInputChange}
@@ -288,7 +337,9 @@ const AdOffers = () => {
                 <label>Start Date:</label>
                 <input
                   type="date"
-                  className={`form-control ${errors.startDate ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.startDate ? "is-invalid" : ""
+                  }`}
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleInputChange}
@@ -303,25 +354,37 @@ const AdOffers = () => {
                 <label>End Date:</label>
                 <input
                   type="date"
-                  className={`form-control ${errors.endDate ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.endDate ? "is-invalid" : ""
+                  }`}
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleInputChange}
                 />
-                {errors.endDate && <div className="invalid-feedback">{errors.endDate}</div>}
+                {errors.endDate && (
+                  <div className="invalid-feedback">{errors.endDate}</div>
+                )}
               </div>
               <div className="col-4 mb-2">
                 <label>Banner:</label>
                 <input
                   type="file"
-                  className={`form-control ${errors.banner ? "is-invalid" : ""}`}
+                  className={`form-control ${
+                    errors.banner ? "is-invalid" : ""
+                  }`}
                   name="banner"
                   onChange={handleFileChange}
                 />
-                {errors.banner && <div className="invalid-feedback">{errors.banner}</div>}
+                {errors.banner && (
+                  <div className="invalid-feedback">{errors.banner}</div>
+                )}
               </div>
               <div className="col-4 mt-4">
-                <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <span>
                       <span
@@ -372,83 +435,107 @@ const AdOffers = () => {
             </tr>
           </thead>
           <tbody>
-            {offers.length === 0 ? (
+            {isLoading ? (
               <tr>
                 <td colSpan="6" className="text-center">
-                  No offers found
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredOffers.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="text-center">
+                  {searchTerm
+                    ? "No matching offers found"
+                    : "No offers available"}
                 </td>
               </tr>
             ) : (
-              offers
-                .filter(
-                  (offer) =>
-                    offer.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    offer.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((offer) => (
-                  <React.Fragment key={offer._id}>
+              filteredOffers.map((offer) => (
+                <React.Fragment key={offer._id}>
+                  <tr>
+                    <td>{offer._id}</td>
+                    <td>{offer.title}</td>
+                    <td>{offer.discount}</td>
+                    <td>
+                      {new Date(
+                        offer.validity || offer.endDate
+                      ).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          new Date(offer.validity || offer.endDate) >=
+                          new Date()
+                            ? "bg-success"
+                            : "bg-danger"
+                        }`}
+                      >
+                        {new Date(offer.validity || offer.endDate) >= new Date()
+                          ? "Active"
+                          : "Expired"}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-primary me-2"
+                        onClick={() => handleView(offer._id)}
+                      >
+                        {expandedOfferId === offer._id ? "Hide" : "View"}
+                      </button>
+                      <button
+                        className="btn btn-sm btn-info me-2"
+                        onClick={() => handleEdit(offer._id)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleDelete(offer._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedOfferId === offer._id && (
                     <tr>
-                      <td>{offer._id}</td>
-                      <td>{offer.title}</td>
-                      <td>{offer.discount}</td>
-                      <td>{new Date(offer.validity || offer.endDate).toLocaleDateString()}</td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            new Date(offer.validity || offer.endDate) >= new Date()
-                              ? "bg-success"
-                              : "bg-danger"
-                          }`}
-                        >
-                          {new Date(offer.validity || offer.endDate) >= new Date()
-                            ? "Active"
-                            : "Expired"}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-sm btn-primary me-2"
-                          onClick={() => handleView(offer._id)} // View button
-                        >
-                          {expandedOfferId === offer._id ? "Hide" : "View"}
-                        </button>
-                        <button
-                          className="btn btn-sm btn-info me-2"
-                          onClick={() => handleEdit(offer._id)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-sm btn-danger"
-                          onClick={() => handleDelete(offer._id)}
-                        >
-                          Delete
-                        </button>
+                      <td colSpan="6">
+                        <div className="p-3 bg-light">
+                          <h5>Offer Details</h5>
+                          <p>
+                            <strong>Description:</strong> {offer.description}
+                          </p>
+                          <p>
+                            <strong>Maximum Discount:</strong>{" "}
+                            {offer.maxdiscount || "N/A"}
+                          </p>
+                          <p>
+                            <strong>Order Total:</strong>{" "}
+                            {offer.orderTotal || "N/A"}
+                          </p>
+                          <p>
+                            <strong>Start Date:</strong>{" "}
+                            {new Date(
+                              offer.startDate || offer.validity
+                            ).toLocaleDateString()}
+                          </p>
+                          <p>
+                            <strong>End Date:</strong>{" "}
+                            {new Date(
+                              offer.endDate || offer.validity
+                            ).toLocaleDateString()}
+                          </p>
+                          <p>
+                            <strong>Banner:</strong>{" "}
+                            {offer.banner || "No banner"}
+                          </p>
+                        </div>
                       </td>
                     </tr>
-                    {expandedOfferId === offer._id && (
-                      <tr>
-                        <td colSpan="6">
-                          <div className="p-3 bg-light">
-                            <h5>Offer Details</h5>
-                            <p><strong>Description:</strong> {offer.description}</p>
-                            <p><strong>Maximum Discount:</strong> {offer.maxdiscount || "N/A"}</p>
-                            <p><strong>Order Total:</strong> {offer.orderTotal || "N/A"}</p>
-                            <p>
-                              <strong>Start Date:</strong>{" "}
-                              {new Date(offer.startDate || offer.validity).toLocaleDateString()}
-                            </p>
-                            <p>
-                              <strong>End Date:</strong>{" "}
-                              {new Date(offer.endDate || offer.validity).toLocaleDateString()}
-                            </p>
-                            <p><strong>Banner:</strong> {offer.banner || "No banner"}</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))
+                  )}
+                </React.Fragment>
+              ))
             )}
           </tbody>
         </table>
