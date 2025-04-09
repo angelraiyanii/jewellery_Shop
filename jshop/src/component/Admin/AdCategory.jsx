@@ -18,6 +18,8 @@ export class AddCategory extends Component {
       categoryImagePreview: null,
       errors: {},
       searchQuery: "",
+      currentPage: 1,
+      itemsPerPage: 3,
     };
   }
 
@@ -167,12 +169,12 @@ export class AddCategory extends Component {
       UpdateCategoryForm: true,
       showCategoryForm: false,
       selectedCategoryId: category._id,
-      categoryName: category.categoryName || "", 
-      categoryStatus: category.categoryStatus || "", 
-      categoryImage: null, 
+      categoryName: category.categoryName || "",
+      categoryStatus: category.categoryStatus || "",
+      categoryImage: null,
       categoryImagePreview: category.categoryImage
         ? `http://localhost:5000/public/images/category_images/${category.categoryImage}`
-        : null, 
+        : null,
     });
   };
 
@@ -274,7 +276,11 @@ export class AddCategory extends Component {
       </form>
     );
   };
-
+  handlePageChange = (pageNumber) => {
+    this.setState({
+      currentPage: pageNumber,
+    });
+  };
   render() {
     const { categories, errors } = this.state;
     const filteredCategories = this.state.categories.filter((category) => {
@@ -282,6 +288,21 @@ export class AddCategory extends Component {
         .toLowerCase()
         .includes(this.state.searchQuery.toLowerCase());
     });
+    // Pagination logic
+    const { currentPage, itemsPerPage } = this.state;
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredCategories.slice(
+      indexOfFirstItem,
+      indexOfLastItem
+    );
+    const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+
+    // Generate page numbers
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
     return (
       <center>
         <div className="container ">
@@ -536,16 +557,16 @@ export class AddCategory extends Component {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCategories.length === 0 ? (
+                    {currentItems.length === 0 ? (
                       <tr>
                         <td colSpan="6" className="text-center text-muted">
                           No categories found.
                         </td>
                       </tr>
                     ) : (
-                      filteredCategories.map((category, index) => (
+                      currentItems.map((category, index) => (
                         <tr key={category._id}>
-                          <td>{index + 1}</td>
+                          <td>{indexOfFirstItem + index + 1}</td>
                           <td>
                             <img
                               src={
@@ -592,32 +613,61 @@ export class AddCategory extends Component {
             </div>
           </div>
         )}
-        {/* Add Category Form  */}
-        {/* Pagenation start */}
-        <div className="row">
-          <div className="col-md-5"></div>
-          <nav className="col-md-2">
-            <ul className="pagination">
-              <li className="page-item">
-                <a className="page-link btn-dark" href="#">
-                  1<i className="fa fa-chevron-left"></i>
-                </a>
-              </li>
-              <li className="page-item">
-                <a className="page-link btn-outline-dark" href="#">
-                  2
-                </a>
-              </li>
-              <li className="page-item">
-                <a className="page-link btn-dark" href="#">
-                  3<i className="fa fa-chevron-right"></i>
-                </a>
-              </li>
-            </ul>
-          </nav>
-          <div className="col-md-5"></div>
-        </div>
-        {/* Pagination End */}
+
+        {/* Pagination */}
+        {filteredCategories.length > 0 && (
+          <div className="row mt-3">
+            <div className="col-md-12 d-flex justify-content-center">
+              <nav>
+                <ul className="pagination">
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => this.handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      &laquo; Prev
+                    </button>
+                  </li>
+
+                  {pageNumbers.map((number) => (
+                    <li
+                      key={number}
+                      className={`page-item ${
+                        currentPage === number ? "active" : ""
+                      }`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => this.handlePageChange(number)}
+                      >
+                        {number}
+                      </button>
+                    </li>
+                  ))}
+
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => this.handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next &raquo;
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        )}
       </center>
     );
   }

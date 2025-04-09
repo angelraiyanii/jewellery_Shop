@@ -42,7 +42,6 @@ const AdContact = () => {
   };
 
   const handleReplyChange = (e) => setReply(e.target.value);
-
   const sendReply = async () => {
     try {
       const response = await fetch(
