@@ -9,7 +9,12 @@ const AdContact = () => {
   const [showModal, setShowModal] = useState(false);
   const [reply, setReply] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(3);
 
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
   useEffect(() => {
     const fetchInquiries = async () => {
       try {
@@ -115,7 +120,20 @@ const AdContact = () => {
   if (loading)
     return <div className="p-4 text-center">Loading inquiries...</div>;
   if (error) return <div className="p-4 text-center text-danger">{error}</div>;
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredInquiries.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
 
+  // Generate page numbers
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">Contact Inquiries</h2>
@@ -126,7 +144,7 @@ const AdContact = () => {
           <input
             type="text"
             className="form-control"
-            placeholder="Search inquiries..."
+            placeholder="🔎Search inquiries..."
             value={searchTerm}
             onChange={handleSearchChange}
           />
@@ -146,8 +164,8 @@ const AdContact = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredInquiries.length > 0 ? (
-            filteredInquiries.map((inquiry) => (
+          {currentItems.length > 0 ? (
+            currentItems.map((inquiry) => (
               <tr key={inquiry._id}>
                 <td>{inquiry._id.substring(0, 8)}...</td>
                 <td>{inquiry.name || "N/A"}</td>
@@ -198,7 +216,59 @@ const AdContact = () => {
           )}
         </tbody>
       </table>
+      {/* Pagination start*/}
+      {filteredInquiries.length > 0 && (
+        <div className="row mt-3">
+          <div className="col-md-12 d-flex justify-content-center">
+            <nav>
+              <ul className="pagination">
+                <li
+                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    &laquo; Prev
+                  </button>
+                </li>
 
+                {pageNumbers.map((number) => (
+                  <li
+                    key={number}
+                    className={`page-item ${
+                      currentPage === number ? "active" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => handlePageChange(number)}
+                    >
+                      {number}
+                    </button>
+                  </li>
+                ))}
+
+                <li
+                  className={`page-item ${
+                    currentPage === totalPages ? "disabled" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next &raquo;
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      )}
+      {/* Pagination end*/}
       {/* Modal */}
       {showModal && selectedInquiry && (
         <div className="fixed inset-0 bg-black bg-opacity-50 d-flex align-items-center justify-content-center p-4">

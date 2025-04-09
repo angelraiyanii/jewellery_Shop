@@ -614,7 +614,7 @@ export class AddCategory extends Component {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Pagination start*/}
         {filteredCategories.length > 0 && (
           <div className="row mt-3">
             <div className="col-md-12 d-flex justify-content-center">
@@ -668,6 +668,7 @@ export class AddCategory extends Component {
             </div>
           </div>
         )}
+             {/* Pagination end*/}
       </center>
     );
   }

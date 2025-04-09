@@ -11,12 +11,16 @@ const AdBanner = () => {
   const [newImage, setNewImage] = useState(null);
   const [formData, setFormData] = useState({ name: "", status: "Active" });
   const [errors, setErrors] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(3);
 
   // Fetch banners on mount
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/BannerModel/banners");
+        const response = await axios.get(
+          "http://localhost:5000/api/BannerModel/banners"
+        );
         setBanners(response.data);
       } catch (error) {
         console.error("Error fetching banners:", error);
@@ -33,7 +37,12 @@ const AdBanner = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file && (file.type === "image/png" || file.type === "image/jpeg" || file.type === "image/jpg")) {
+    if (
+      file &&
+      (file.type === "image/png" ||
+        file.type === "image/jpeg" ||
+        file.type === "image/jpg")
+    ) {
       const imageUrl = URL.createObjectURL(file);
       setNewImage({ file, url: imageUrl });
       setErrors({});
@@ -79,8 +88,13 @@ const AdBanner = () => {
       setNewImage(null);
       setFormData({ name: "", status: "Active" });
     } catch (error) {
-      console.error("Error adding banner:", error.response?.data || error.message);
-      setErrors({ form: error.response?.data?.error || "Failed to add banner" });
+      console.error(
+        "Error adding banner:",
+        error.response?.data || error.message
+      );
+      setErrors({
+        form: error.response?.data?.error || "Failed to add banner",
+      });
     }
   };
 
@@ -120,12 +134,21 @@ const AdBanner = () => {
         formDataToSend,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      setBanners(banners.map((b) => (b._id === selectedBanner._id ? response.data.banner : b)));
+      setBanners(
+        banners.map((b) =>
+          b._id === selectedBanner._id ? response.data.banner : b
+        )
+      );
       alert("Banner updated successfully!");
       handleClose();
     } catch (error) {
-      console.error("Error updating banner:", error.response?.data || error.message);
-      setErrors({ form: error.response?.data?.error || "Failed to update banner" });
+      console.error(
+        "Error updating banner:",
+        error.response?.data || error.message
+      );
+      setErrors({
+        form: error.response?.data?.error || "Failed to update banner",
+      });
     }
   };
 
@@ -134,14 +157,31 @@ const AdBanner = () => {
     if (!window.confirm("Are you sure you want to delete this banner?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/BannerModel/delete-banner/${id}`);
+      await axios.delete(
+        `http://localhost:5000/api/BannerModel/delete-banner/${id}`
+      );
       setBanners(banners.filter((b) => b._id !== id));
       alert("Banner deleted successfully!");
     } catch (error) {
-      console.error("Error deleting banner:", error.response?.data || error.message);
-      alert("Failed to delete banner: " + (error.response?.data?.error || error.message));
+      console.error(
+        "Error deleting banner:",
+        error.response?.data || error.message
+      );
+      alert(
+        "Failed to delete banner: " +
+          (error.response?.data?.error || error.message)
+      );
     }
   };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = banners.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(banners.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="container mt-4">
@@ -162,7 +202,7 @@ const AdBanner = () => {
           </tr>
         </thead>
         <tbody>
-          {banners.map((banner) => (
+          {currentItems.map((banner) => (
             <tr key={banner._id}>
               <td>{banner._id}</td>
               <td>{banner.name}</td>
@@ -180,16 +220,24 @@ const AdBanner = () => {
               </td>
               <td>
                 <span
-                  className={`badge ${banner.status === "Active" ? "bg-success" : "bg-danger"}`}
+                  className={`badge ${
+                    banner.status === "Active" ? "bg-success" : "bg-danger"
+                  }`}
                 >
                   {banner.status}
                 </span>
               </td>
               <td>
-                <button className="btn btn-sm btn-primary me-2" onClick={() => handleEdit(banner)}>
+                <button
+                  className="btn btn-sm btn-primary me-2"
+                  onClick={() => handleEdit(banner)}
+                >
                   Edit
                 </button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(banner._id)}>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => handleDelete(banner._id)}
+                >
                   Delete
                 </button>
               </td>
@@ -197,7 +245,55 @@ const AdBanner = () => {
           ))}
         </tbody>
       </table>
+      {/* Pagination  start*/}
+      {banners.length > itemsPerPage && (
+        <nav className="mt-4">
+          <ul className="pagination justify-content-center">
+            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+              <button
+                className="page-link"
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                &laquo; Previous
+              </button>
+            </li>
 
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <li
+                  key={number}
+                  className={`page-item ${
+                    currentPage === number ? "active" : ""
+                  }`}
+                >
+                  <button
+                    onClick={() => paginate(number)}
+                    className="page-link"
+                  >
+                    {number}
+                  </button>
+                </li>
+              )
+            )}
+
+            <li
+              className={`page-item ${
+                currentPage === totalPages ? "disabled" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next &raquo;
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
+      {/* Pagination End */}
       {/* Add Banner Form */}
       {showAddForm && (
         <div className="modal-overlay">
@@ -213,7 +309,9 @@ const AdBanner = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                 />
-                {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                {errors.name && (
+                  <div className="invalid-feedback">{errors.name}</div>
+                )}
               </div>
               <div className="mb-3">
                 <label className="form-label">Status</label>
@@ -235,7 +333,9 @@ const AdBanner = () => {
                   accept="image/png, image/jpeg, image/jpg"
                   onChange={handleImageChange}
                 />
-                {errors.image && <div className="invalid-feedback">{errors.image}</div>}
+                {errors.image && (
+                  <div className="invalid-feedback">{errors.image}</div>
+                )}
                 {newImage && (
                   <img
                     src={newImage.url}
@@ -245,9 +345,15 @@ const AdBanner = () => {
                   />
                 )}
               </div>
-              {errors.form && <small className="text-danger">{errors.form}</small>}
+              {errors.form && (
+                <small className="text-danger">{errors.form}</small>
+              )}
               <div className="d-flex justify-content-between mt-3">
-                <button type="button" className="btn btn-danger" onClick={handleClose}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleClose}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
@@ -274,7 +380,9 @@ const AdBanner = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                 />
-                {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                {errors.name && (
+                  <div className="invalid-feedback">{errors.name}</div>
+                )}
               </div>
               <div className="mb-3">
                 <label className="form-label">Status</label>
@@ -311,7 +419,9 @@ const AdBanner = () => {
                     accept="image/png, image/jpeg, image/jpg"
                     onChange={handleImageChange}
                   />
-                  {errors.image && <small className="text-danger">{errors.image}</small>}
+                  {errors.image && (
+                    <small className="text-danger">{errors.image}</small>
+                  )}
                   {newImage ? (
                     <img
                       src={newImage.url}
@@ -333,9 +443,15 @@ const AdBanner = () => {
                   )}
                 </div>
               </div>
-              {errors.form && <small className="text-danger">{errors.form}</small>}
+              {errors.form && (
+                <small className="text-danger">{errors.form}</small>
+              )}
               <div className="d-flex justify-content-between mt-3">
-                <button type="button" className="btn btn-danger" onClick={handleClose}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleClose}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">

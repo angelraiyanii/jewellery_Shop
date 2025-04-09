@@ -25,9 +25,10 @@ const AdPro = () => {
     stock: "",
     quantity: "",
     productImage: null,
-    searchQuery: "",
   });
-
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -37,6 +38,9 @@ const AdPro = () => {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [viewSingleProduct, setViewSingleProduct] = useState(null);
   const [updateProductId, setUpdateProductId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(3);
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -221,7 +225,6 @@ const AdPro = () => {
       );
     }
   };
-  const [searchQuery, setSearchQuery] = useState("");
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
@@ -237,8 +240,20 @@ const AdPro = () => {
     setShowProductForm(false);
     setShowUpdateForm(false);
   };
- 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredProducts.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
+  // Generate page numbers
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
   return (
     <center>
       <div className="container ">
@@ -1080,14 +1095,14 @@ const AdPro = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.length === 0 ? (
+                    {currentItems.length === 0 ? (
                       <tr>
                         <td colSpan="8" className="text-center text-muted">
                           No Product found.
                         </td>
                       </tr>
                     ) : (
-                      filteredProducts.map((product, index) => (
+                      currentItems.map((product, index) => (
                         <>
                           <tr key={product._id}>
                             <td>{index + 1}</td>
@@ -1392,7 +1407,62 @@ const AdPro = () => {
             </div>
           </div>
         )}
-              {/* Product View Table end */}
+        {/* Product View Table end */}
+        {/* Pagination start*/}
+        {filteredProducts.length > 0 && (
+          <div className="row mt-3">
+            <div className="col-md-12 d-flex justify-content-center">
+              <nav>
+                <ul className="pagination">
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      &laquo; Prev
+                    </button>
+                  </li>
+
+                  {pageNumbers.map((number) => (
+                    <li
+                      key={number}
+                      className={`page-item ${
+                        currentPage === number ? "active" : ""
+                      }`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => handlePageChange(number)}
+                      >
+                        {number}
+                      </button>
+                    </li>
+                  ))}
+
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next &raquo;
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        )}
+        {/* Pagination end*/}
       </div>
     </center>
   );

@@ -27,9 +27,15 @@ export class AdUser extends Component {
       },
       errors: {},
       imagePreview: null,
+      currentPage: 1,
+      itemsPerPage: 3,
     };
   }
-
+  handlePageChange = (pageNumber) => {
+    this.setState({
+      currentPage: pageNumber,
+    });
+  };
   componentDidMount() {
     axios
       .get("http://localhost:5000/api/Login/all-Login")
@@ -397,13 +403,23 @@ export class AdUser extends Component {
         user.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    // Pagination logic
+    const { currentPage, itemsPerPage } = this.state;
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
+    // Generate page numbers
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
     return (
       <center>
         <div className="container mt-4">
-        <h2 className="text-center mb-4">Manage Users</h2>
+          <h2 className="text-center mb-4">Manage Users</h2>
           <div className="d-flex justify-content-between mb-3">
-            
             <div className="d-flex">
               <input
                 type="text"
@@ -448,7 +464,6 @@ export class AdUser extends Component {
         )}
 
         <div className="container mt-5">
-       
           <div className="table-responsive">
             <table className="table table-bordered text-center align-middle">
               <thead className="table table-bordered">
@@ -463,14 +478,14 @@ export class AdUser extends Component {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length === 0 ? (
+                {currentItems.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="text-center text-muted">
                       No users found.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user, index) => (
+                  currentItems.map((user, index) => (
                     <React.Fragment key={user._id}>
                       <tr>
                         <td>{index + 1}</td>
@@ -576,6 +591,61 @@ export class AdUser extends Component {
             </table>
           </div>
         </div>
+        {/* Pagination start*/}
+        {filteredUsers.length > 0 && (
+          <div className="row mt-3">
+            <div className="col-md-12 d-flex justify-content-center">
+              <nav>
+                <ul className="pagination">
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => this.handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      &laquo; Prev
+                    </button>
+                  </li>
+
+                  {pageNumbers.map((number) => (
+                    <li
+                      key={number}
+                      className={`page-item ${
+                        currentPage === number ? "active" : ""
+                      }`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => this.handlePageChange(number)}
+                      >
+                        {number}
+                      </button>
+                    </li>
+                  ))}
+
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => this.handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next &raquo;
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        )}
+        {/* Pagination end*/}
       </center>
     );
   }

@@ -7,6 +7,8 @@ const AdOffers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(3);
   const [editOfferId, setEditOfferId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -27,7 +29,9 @@ const AdOffers = () => {
   useEffect(() => {
     fetchOffers();
   }, []);
-
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
   const fetchOffers = async () => {
     try {
       setIsLoading(true);
@@ -93,7 +97,7 @@ const AdOffers = () => {
           }
         } else {
           response = await axios.post(
-            "http://localhost:5000/api/offers/add",
+            "http://localhost:5000/api/OfferModel/add",
             formData
           );
           if (response.data.success) {
@@ -197,7 +201,7 @@ const AdOffers = () => {
 
   // Toggle expanded row
   const handleView = (id) => {
-    setExpandedOfferId(expandedOfferId === id ? null : id); // Toggle: expand if collapsed, collapse if expanded
+    setExpandedOfferId(expandedOfferId === id ? null : id);
   };
   const filteredOffers = offers.filter((offer) => {
     const searchLower = searchTerm.toLowerCase();
@@ -209,6 +213,18 @@ const AdOffers = () => {
       offer.orderTotal?.toString().toLowerCase().includes(searchLower)
     );
   });
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredOffers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredOffers.length / itemsPerPage);
+
+  // Generate page numbers
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">Admin Offers</h2>
@@ -443,7 +459,7 @@ const AdOffers = () => {
                   </div>
                 </td>
               </tr>
-            ) : filteredOffers.length === 0 ? (
+            ) : currentItems.length === 0 ? (
               <tr>
                 <td colSpan="6" className="text-center">
                   {searchTerm
@@ -452,7 +468,7 @@ const AdOffers = () => {
                 </td>
               </tr>
             ) : (
-              filteredOffers.map((offer) => (
+              currentItems.map((offer) => (
                 <React.Fragment key={offer._id}>
                   <tr>
                     <td>{offer._id}</td>
@@ -540,6 +556,59 @@ const AdOffers = () => {
           </tbody>
         </table>
       )}
+      {/* Pagination start*/}
+      {filteredOffers.length > 0 && (
+        <div className="row mt-3">
+          <div className="col-md-12 d-flex justify-content-center">
+            <nav>
+              <ul className="pagination">
+                <li
+                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    &laquo; Prev
+                  </button>
+                </li>
+
+                {pageNumbers.map((number) => (
+                  <li
+                    key={number}
+                    className={`page-item ${
+                      currentPage === number ? "active" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => handlePageChange(number)}
+                    >
+                      {number}
+                    </button>
+                  </li>
+                ))}
+
+                <li
+                  className={`page-item ${
+                    currentPage === totalPages ? "disabled" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next &raquo;
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      )}
+      {/* Pagination end*/}
     </div>
   );
 };
