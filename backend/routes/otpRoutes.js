@@ -1,4 +1,3 @@
-// backend/routes/otpRoutes.js
 const express = require('express');
 const router = express.Router();
 const User = require('../models/Login'); 
@@ -25,7 +24,7 @@ router.post('/send-otp', async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Save OTP to database
-    await OtpModel.findOneAndDelete({ email }); // Delete existing OTP if any
+    await OtpModel.findOneAndDelete({ email }); 
     const newOtp = new OtpModel({
       email,
       otp
