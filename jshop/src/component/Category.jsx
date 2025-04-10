@@ -15,7 +15,10 @@ const Category = ({ onCategorySelect }) => {
         const response = await axios.get(
           "http://localhost:5000/api/CategoryModel/categories"
         );
-        setCategories(response.data);
+        const activeCategories = response.data.filter(
+          (category) => category.categoryStatus === "Active"
+        );
+        setCategories(activeCategories);
       } catch (error) {
         console.error("Error fetching categories:", error);
         setCategories([
@@ -33,10 +36,8 @@ const Category = ({ onCategorySelect }) => {
   // Handle category click
   const handleCategoryClick = (categoryName) => {
     if (onCategorySelect) {
-      // If onCategorySelect prop exists, call it (for in-page filtering)
       onCategorySelect(categoryName);
     } else {
-      // Otherwise redirect to Ct_product with category as query parameter
       navigate(`/Ct_product?category=${encodeURIComponent(categoryName)}`);
     }
   };

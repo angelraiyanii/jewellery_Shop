@@ -6,13 +6,16 @@ import pro1 from "./images/pro2.png"; // Default image
 import { useParams } from "react-router-dom"; // Use hooks in a wrapper
 import Rating_Review from "./Rating_Review";
 
-// Class Component
 class SingleProClass extends Component {
   constructor(props) {
     super(props);
     this.state = {
       product: null,
       error: null,
+      isLoading: false, // For cart loading state
+      isLikeLoading: false, // For wishlist loading state
+      cartMessage: "", // Success message for cart
+      wishlistMessage: "", // Success message for wishlist
     };
   }
 
@@ -27,7 +30,7 @@ class SingleProClass extends Component {
   }
 
   fetchProduct = async () => {
-    const { productId } = this.props; // productId passed from wrapper
+    const { productId } = this.props;
     try {
       const response = await axios.get(
         `http://localhost:5000/api/ProductModel/products/${productId}`
@@ -37,15 +40,101 @@ class SingleProClass extends Component {
       console.error("Error fetching product:", error);
       this.setState({
         error: "Failed to load product",
-    
       });
     }
   };
 
-  render() {
-    const { product, error } = this.state;
+  // Add to Cart functionality
+  addToCart = async (productId) => {
+    this.setState({ isLoading: true, cartMessage: "" });
 
-   
+    try {
+      const userData =
+        localStorage.getItem("user") || localStorage.getItem("admin");
+
+      if (!userData) {
+        window.location.href = "/login";
+        return;
+      }
+      const user = JSON.parse(userData);
+      const userId = user.id;
+
+      const response = await axios.post(
+        "http://localhost:5000/api/CartModel/add",
+        {
+          userId,
+          productId,
+        }
+      );
+
+      console.log("Added to cart response:", response.data);
+      this.setState({ cartMessage: "Product added to cart successfully!" });
+      setTimeout(() => this.setState({ cartMessage: "" }), 3000); // Clear message after 3 seconds
+    } catch (error) {
+      console.error(
+        "Error adding to cart:",
+        error.response?.data || error.message
+      );
+      alert(
+        "Failed to add product to cart: " +
+          (error.response?.data?.error || error.message)
+      );
+    } finally {
+      this.setState({ isLoading: false });
+    }
+  };
+
+  // Add to Wishlist functionality
+  addToWishlist = async (productId) => {
+    this.setState({ isLikeLoading: true, wishlistMessage: "" });
+
+    try {
+      const userData =
+        localStorage.getItem("user") || localStorage.getItem("admin");
+
+      if (!userData) {
+        window.location.href = "/login";
+        return;
+      }
+      const user = JSON.parse(userData);
+      const userId = user.id;
+
+      const response = await axios.post(
+        "http://localhost:5000/api/WishlistModel/add",
+        {
+          userId,
+          productId,
+        }
+      );
+
+      console.log("Added to wishlist response:", response.data);
+      this.setState({
+        wishlistMessage: "Product added to wishlist successfully!",
+      });
+      setTimeout(() => this.setState({ wishlistMessage: "" }), 3000); // Clear message after 3 seconds
+    } catch (error) {
+      console.error(
+        "Error adding to wishlist:",
+        error.response?.data || error.message
+      );
+      alert(
+        "Failed to add product to wishlist: " +
+          (error.response?.data?.error || error.message)
+      );
+    } finally {
+      this.setState({ isLikeLoading: false });
+    }
+  };
+
+  render() {
+    const {
+      product,
+      error,
+      isLoading,
+      isLikeLoading,
+      cartMessage,
+      wishlistMessage,
+    } = this.state;
 
     if (error) {
       return <div className="container mt-5 text-danger">{error}</div>;
@@ -100,9 +189,15 @@ class SingleProClass extends Component {
                   <p className="text-muted">{displayProduct.categoryName}</p>
                   <div className="d-flex align-items-center">
                     <h5 className="text-decoration-line-through me-2 text-gray-400">
-                      Rs. {(displayProduct.price / (1 - displayProduct.discount / 100)).toFixed(2)}
+                      Rs.{" "}
+                      {(
+                        displayProduct.price /
+                        (1 - displayProduct.discount / 100)
+                      ).toFixed(2)}
                     </h5>
-                    <h5 className="text-danger me-2">Rs. {displayProduct.price}</h5>
+                    <h5 className="text-danger me-2">
+                      Rs. {displayProduct.price}
+                    </h5>
                     <span
                       className="border-start mx-2"
                       style={{
@@ -111,10 +206,15 @@ class SingleProClass extends Component {
                         borderColor: "#495057",
                       }}
                     />
-                    <h6 style={{ color: "green" }}>{displayProduct.discount}% off</h6>
+                    <h6 style={{ color: "green" }}>
+                      {displayProduct.discount}% off
+                    </h6>
                   </div>
                   <div className="mt-4">
-                    <h6 className="fw-bold" style={{ fontSize: "12px", color: "#41566E" }}>
+                    <h6
+                      className="fw-bold"
+                      style={{ fontSize: "12px", color: "#41566E" }}
+                    >
                       Weight Details
                     </h6>
                     <div className="table-responsive">
@@ -137,7 +237,10 @@ class SingleProClass extends Component {
                     </div>
                   </div>
                   <div className="mt-4">
-                    <h6 className="fw-bold" style={{ fontSize: "12px", color: "#41566E" }}>
+                    <h6
+                      className="fw-bold"
+                      style={{ fontSize: "12px", color: "#41566E" }}
+                    >
                       Price Details
                     </h6>
                     <div className="table-responsive">
@@ -158,7 +261,9 @@ class SingleProClass extends Component {
                             <td>₹ {displayProduct.goldPrice.toFixed(2)}</td>
                             <td>₹ {displayProduct.diamondPrice.toFixed(2)}</td>
                             <td>₹ {displayProduct.makingCharges.toFixed(2)}</td>
-                            <td>₹ {displayProduct.overheadCharges.toFixed(2)}</td>
+                            <td>
+                              ₹ {displayProduct.overheadCharges.toFixed(2)}
+                            </td>
                             <td>₹ {displayProduct.basePrice.toFixed(2)}</td>
                             <td>₹ {displayProduct.tax.toFixed(2)}</td>
                             <td>₹ {displayProduct.totalPrice.toFixed(2)}</td>
@@ -191,12 +296,43 @@ class SingleProClass extends Component {
                         defaultValue={1}
                       />
                     </div>
-                    <input type="hidden" name="P_Code" value={displayProduct._id || "ABC123"} />
-                    <input type="hidden" name="p_tot_price" value={displayProduct.totalPrice} />
+                    <input
+                      type="hidden"
+                      name="P_Code"
+                      value={displayProduct._id || "ABC123"}
+                    />
+                    <input
+                      type="hidden"
+                      name="p_tot_price"
+                      value={displayProduct.totalPrice}
+                    />
                     <div className="form-group mt-3">
-                      <button className="btn btn-outline-danger">Add to Cart</button>
-                      <button className="btn btn-outline-primary ms-2">Add to Wishlist</button>
+                      <button
+                        className="btn btn-outline-danger"
+                        onClick={() => this.addToCart(displayProduct._id)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Adding..." : "Add to Cart"}
+                      </button>
+                      <button
+                        className="btn btn-outline-primary ms-2"
+                        onClick={() => this.addToWishlist(displayProduct._id)}
+                        disabled={isLikeLoading}
+                      >
+                        {isLikeLoading ? "Adding..." : "Add to Wishlist"}
+                      </button>
                     </div>
+                    {/* Success Messages */}
+                    {cartMessage && (
+                      <div className="alert alert-success mt-3" role="alert">
+                        {cartMessage}
+                      </div>
+                    )}
+                    {wishlistMessage && (
+                      <div className="alert alert-success mt-3" role="alert">
+                        {wishlistMessage}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -211,11 +347,10 @@ class SingleProClass extends Component {
     );
   }
 }
-
-// Functional Wrapper to use useParams
 const SinglePro = () => {
-  const { productId } = useParams(); // Get productId from URL
+  const { productId } = useParams(); 
   return <SingleProClass productId={productId} />;
 };
 
 export default SinglePro;
+  

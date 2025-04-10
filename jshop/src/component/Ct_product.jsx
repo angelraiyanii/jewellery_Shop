@@ -7,12 +7,38 @@ import pro1 from "./images/pro4.png";
 
 export default function Ct_product() {
   const [products, setProducts] = useState([]);
+  const [activeCategories, setActiveCategories] = useState([]);
   const [liked, setLiked] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Fetch active categories first
+  useEffect(() => {
+    const fetchActiveCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/CategoryModel/categories"
+        );
+        const activeCats = response.data.filter(
+          (cat) => cat.categoryStatus === "Active"
+        );
+        setActiveCategories(activeCats);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setActiveCategories([
+          {
+            _id: "fallback1",
+            categoryName: "Earring",
+            categoryStatus: "Active",
+          },
+        ]);
+      }
+    };
+    fetchActiveCategories();
+  }, []);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -24,13 +50,25 @@ export default function Ct_product() {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (activeCategories.length === 0) return;
+
       try {
+        setIsLoading(true);
         const url = selectedCategory
           ? `http://localhost:5000/api/ProductModel/ctproducts?categoryName=${selectedCategory}`
           : "http://localhost:5000/api/ProductModel/ctproducts";
+
         const response = await axios.get(url);
-        setProducts(response.data);
-        setLiked(new Array(response.data.length).fill(false));
+        const activeCategoryNames = activeCategories.map(
+          (cat) => cat.categoryName
+        );
+        const filteredProducts = response.data.filter((product) =>
+          activeCategoryNames.includes(product.categoryName)
+        );
+
+        setProducts(filteredProducts);
+        setLiked(new Array(filteredProducts.length).fill(false));
+
         const userData =
           localStorage.getItem("user") || localStorage.getItem("admin");
         if (userData) {
@@ -45,7 +83,7 @@ export default function Ct_product() {
               (item) => item.productId._id
             );
             setLiked(
-              response.data.map((product) =>
+              filteredProducts.map((product) =>
                 wishlistProductIds.includes(product._id)
               )
             );
@@ -65,10 +103,12 @@ export default function Ct_product() {
           },
         ]);
         setLiked([false]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchProducts();
-  }, [selectedCategory]);
+  }, [selectedCategory, activeCategories]);
 
   const handleCategorySelect = (categoryName) => {
     setSelectedCategory(categoryName);
@@ -167,9 +207,16 @@ export default function Ct_product() {
       <h3 className="p-3 text-center">
         {selectedCategory ? `${selectedCategory} Products` : "All Products"}
       </h3>
-      <div className="row p-5">
-        {products.length > 0 ? (
-          products.map((product, index) => (
+
+      {isLoading ? (
+        <div className="text-center p-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : products.length > 0 ? (
+        <div className="row p-5">
+          {products.map((product, index) => (
             <div className="col-md-3" key={product._id}>
               <div className="card product-card text-center">
                 <img
@@ -205,34 +252,13 @@ export default function Ct_product() {
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="col-md-3">
-            <div className="card product-card text-center">
-              <img src={pro1} alt="Gold Ring" className="product-image" />
-              <div className="overlay">
-                <FaHeart
-                  className={`like-icon ${liked[0] ? "liked" : ""}`}
-                  onClick={() => !isLikeLoading && toggleLike(0, "fallback1")}
-                  style={{ cursor: isLikeLoading ? "wait" : "pointer" }}
-                />
-                <Link to="/SinglePro">
-                  <FaInfoCircle className="info-icon" />
-                </Link>
-                <h4>Gold Ring</h4>
-                <p>$120</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => addToCart("fallback1")}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Adding..." : "Add to Cart"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center p-5">
+          <p>No products available from active categories</p>
+        </div>
+      )}
     </div>
   );
 }

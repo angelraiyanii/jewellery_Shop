@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import axios from "axios";
-import pro1 from "./images/pro1.png"; // Default image
-import { FaHeart } from "react-icons/fa"; // Heart Icon
-import { FaInfoCircle } from "react-icons/fa"; // Info Icon
+import pro1 from "./images/pro1.png";
+import { FaHeart } from "react-icons/fa";
+import { FaInfoCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import "../App.css";
 
@@ -10,29 +10,46 @@ export class Product extends Component {
   constructor() {
     super();
     this.state = {
-      products: [], // Store fetched products
-      liked: [], // Dynamically initialized based on products
-      isLoading: false, // Loading state for add to cart
-      isLikeLoading: false, // Loading state for like button
+      products: [],
+      categories: [], // Store all categories
+      liked: [],
+      isLoading: false,
+      isLikeLoading: false,
     };
   }
 
-  // Fetch products when component mounts
   componentDidMount() {
-    this.fetchProducts();
+    this.fetchCategoriesAndProducts();
   }
 
-  fetchProducts = async () => {
+  fetchCategoriesAndProducts = async () => {
     try {
-      const response = await axios.get(
+      // Fetch categories first
+      const categoriesResponse = await axios.get(
+        "http://localhost:5000/api/CategoryModel/categories"
+      );
+      const categories = categoriesResponse.data;
+
+      // Then fetch products
+      const productsResponse = await axios.get(
         "http://localhost:5000/api/ProductModel/products"
       );
-      const products = response.data;
+      const allProducts = productsResponse.data;
+
+      // Get names of active categories
+      const activeCategoryNames = categories
+        .filter((category) => category.categoryStatus === "Active")
+        .map((category) => category.categoryName);
+
+      // Filter products to only include those from active categories
+      const filteredProducts = allProducts.filter((product) =>
+        activeCategoryNames.includes(product.categoryName)
+      );
 
       // Initialize liked array
-      const liked = Array(products.length).fill(false);
+      const liked = Array(filteredProducts.length).fill(false);
 
-      // Check if user is logged in, fetch wishlist and update liked states
+      // Check wishlist if user is logged in
       const userData =
         localStorage.getItem("user") || localStorage.getItem("admin");
       if (userData) {
@@ -46,9 +63,7 @@ export class Product extends Component {
           const wishlistProductIds = wishlistResponse.data.map(
             (item) => item.productId._id
           );
-
-          // Update liked state based on wishlist
-          products.forEach((product, index) => {
+          filteredProducts.forEach((product, index) => {
             if (wishlistProductIds.includes(product._id)) {
               liked[index] = true;
             }
@@ -59,11 +74,23 @@ export class Product extends Component {
       }
 
       this.setState({
-        products,
+        products:
+          filteredProducts.length > 0
+            ? filteredProducts
+            : [
+                {
+                  _id: "fallback1",
+                  productName: "Gold Ring",
+                  price: 120,
+                  productImage: "pro1.png",
+                  categoryName: "Finger Ring",
+                },
+              ],
+        categories,
         liked,
       });
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching data:", error);
       this.setState({
         products: [
           {
@@ -71,13 +98,13 @@ export class Product extends Component {
             productName: "Gold Ring",
             price: 120,
             productImage: "pro1.png",
+            categoryName: "Finger Ring",
           },
         ],
         liked: [false],
       });
     }
   };
-
   // Add to cart functionality
   addToCart = async (productId) => {
     this.setState({ isLoading: true });
@@ -124,7 +151,7 @@ export class Product extends Component {
     }
   };
 
-  // Add to Wishlist - Fixed for class component
+  // Add to Wishlist
   toggleLike = async (index, productId) => {
     const userData =
       localStorage.getItem("user") || localStorage.getItem("admin");
@@ -147,13 +174,9 @@ export class Product extends Component {
           userId,
           productId,
         });
-
-        // Update liked state in class component style
         const newLiked = [...liked];
         newLiked[index] = true;
         this.setState({ liked: newLiked });
-
-        // Navigate to wishlist page
         window.location.href = "/wishlist";
       } else {
         alert("Item already in wishlist");
@@ -174,27 +197,30 @@ export class Product extends Component {
 
   render() {
     const { products, liked, isLoading, isLikeLoading } = this.state;
-
     return (
       <div className="container mt-3" style={{ paddingBottom: "60px" }}>
         <h2 className="text-center" style={{ paddingBottom: "20px" }}>
-          Product List
+          Available Products
         </h2>
 
-        <div className="row p-3">
-          {products.length > 0 ? (
-            products.map((product, index) => (
+        {products.length === 0 ? (
+          <div className="text-center">
+            <p>No active products available at the moment.</p>
+          </div>
+        ) : (
+          <div className="row p-3">
+            {products.map((product, index) => (
               <div className="col-md-3" key={product._id}>
                 <div className="card product-card text-center">
                   <img
                     src={
                       product.productImage
                         ? `http://localhost:5000/public/images/product_images/${product.productImage}`
-                        : pro1 // Fallback to default image
+                        : pro1
                     }
                     alt={product.productName}
                     className="product-image"
-                    onError={(e) => (e.target.src = pro1)} // Fallback if image fails
+                    onError={(e) => (e.target.src = pro1)}
                   />
                   <div className="overlay">
                     <FaHeart
@@ -219,37 +245,9 @@ export class Product extends Component {
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            // Fallback card if no products
-            <div className="col-md-3">
-              <div className="card product-card text-center">
-                <img src={pro1} alt="Gold Ring" className="product-image" />
-                <div className="overlay">
-                  <FaHeart
-                    className={`like-icon ${liked[0] ? "liked" : ""}`}
-                    onClick={() =>
-                      !isLikeLoading && this.toggleLike(0, "fallback1")
-                    }
-                    style={{ cursor: isLikeLoading ? "wait" : "pointer" }}
-                  />
-                  <Link to="/SinglePro">
-                    <FaInfoCircle className="info-icon" />
-                  </Link>
-                  <h4>Gold Ring</h4>
-                  <p>$120</p>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => this.addToCart("fallback1")}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding..." : "Add to Cart"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }

@@ -143,6 +143,7 @@ export class AddCategory extends Component {
         } else {
           alert(data.error);
         }
+        
       } catch (error) {
         console.error("Fetch Error:", error);
         alert(`Error ${isUpdate ? "updating" : "adding"} category`);
@@ -527,6 +528,7 @@ export class AddCategory extends Component {
                           <button
                             type="submit"
                             className="btn btn-primary btn-lg"
+                            
                           >
                             Update Category
                           </button>
