@@ -88,7 +88,7 @@ router.put("/:id", upload.single("profilePic"), async (req, res) => {
       address,
     };
 
-    if (password) updateData.password = password; // Only update password if provided
+    if (password) updateData.password = password; 
     if (req.file) updateData.profilePic = req.file.filename;
 
     const updatedUser = await UserSchema.findByIdAndUpdate(req.params.id, updateData, { new: true });

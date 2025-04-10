@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 
 // Importing route files
+
+// Add CORS middleware
+const cors = require('cors');
+router.use(cors());
+
 // User 
 const loginRoutes = require("./loginRoutes");
 router.use("/Login", loginRoutes);
@@ -37,6 +42,12 @@ router.use("/CartModel", cartRoutes);
 // Wishlist 
 const wishlistRoutes = require("./wishlistRoutes"); 
 router.use("/WishlistModel", wishlistRoutes);
+
+// OTP 
+// const otpRoutes = require("./models/otpRoutes");
+// router.use("/models/OtpModel", otpRoutes); 
+const otpRoutes = require('./otpRoutes');
+router.use('/OtpModel', otpRoutes);
 
 router.use((req, res) => {
   res.status(404).json({ error: "Route not found." });

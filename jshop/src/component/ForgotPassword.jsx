@@ -1,42 +1,56 @@
 import { useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
 import bg from "./Images/bg.png";
-import { Link } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState("");
   const [message, setMessage] = useState("");
-
-  const handleChange = (e) => {
-    setEmail(e.target.value);
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const validateEmail = (email) => {
-    if (!email) {
-      return "Email is required.";
-    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      return "Invalid email format.";
-    }
-    return "";
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const error = validateEmail(email);
-    setErrors(error);
+    setErrors("");
+    setMessage("");
 
-    if (!error) {
-      setMessage("Password reset link has been sent to your email.");
-      setEmail("");
-      setErrors("");
+    if (!validateEmail(email)) {
+      setErrors("Please enter a valid email address");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/OtpModel/send-otp",
+        { email },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      setMessage("OTP has been sent to your email");
+      setTimeout(() => {
+        navigate("/OTPVerification", { state: { email } });
+      }, 1500);
+    } catch (err) {
+      console.error("OTP Send Error:", err);
+      setErrors(
+        err.response?.data?.error || "Failed to send OTP. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div
-      className="d-flex justify-content-center align-items-center "
+      className="d-flex justify-content-center align-items-center"
       style={{
         backgroundImage: `url(${bg})`,
         backgroundSize: "cover",
@@ -50,34 +64,35 @@ const ForgotPassword = () => {
       >
         <h3 className="text-center mb-4">Forgot Password</h3>
         <form onSubmit={handleSubmit}>
-          {/* Email */}
           <div className="mb-3">
             <label htmlFor="email" className="form-label fw-bold">
               Enter your email
             </label>
             <input
               type="email"
-              id="email"
-              name="email"
-              className={`form-control form-control-sm ${errors ? "is-invalid" : ""}`}
               value={email}
-              onChange={handleChange}
-              placeholder="Enter your email"
+              onChange={(e) => setEmail(e.target.value)}
+              className={`form-control form-control-sm ${
+                errors ? "is-invalid" : ""
+              }`}
+              placeholder="Enter your registered email"
+              required
             />
             {errors && <div className="invalid-feedback">{errors}</div>}
+            {message && <p className="text-success text-center">{message}</p>}
           </div>
-          {/* Message */}
-          {message && <p className="text-success text-center">{message}</p>}
-          {/* Submit Button */}
-         
-          <button type="submit" className="btn btn-primary w-50 d-block mx-auto">
-            Send Otp
-          </button> <Link to="/OTPVerification">
-          otp Form
-          </Link>
-          {/* Back to Login */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn btn-primary w-50 d-block mx-auto"
+          >
+            {isLoading ? "Sending..." : "Send OTP"}
+          </button>
           <p className="text-center mt-3">
-            Remembered your password? <Link to="/login" className="text-danger">Login</Link>
+            Remembered your password?{" "}
+            <Link to="/login" className="text-danger">
+              Login
+            </Link>
           </p>
         </form>
       </div>

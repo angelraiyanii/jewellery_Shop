@@ -11,6 +11,7 @@ import Login from "./component/Login";
 import Registor from "./component/Registor";
 import ForgotPassword from "./component/ForgotPassword";
 import OTPVerification from "./component/OTPVerification";
+import ResetPassword from "./component/ResetPassword";
 import Account from "./component/Account";
 import Cart from "./component/Cart";
 import Checkout from "./component/Checkout";
@@ -43,8 +44,6 @@ function App() {
               <Category />
               <Product />
               {/* <OfferBanner/> */}
-         
-             
             </>
           }
         />
@@ -61,6 +60,7 @@ function App() {
         <Route path="/OrderHistory" element={<OrderHistory />} />
         <Route path="/ForgotPassword" element={<ForgotPassword />} />
         <Route path="/OTPVerification" element={<OTPVerification />} />
+        <Route path="/ResetPassword" element={<ResetPassword />} />
         <Route path="/Rating_Review" element={<Rating_Review />} />
         <Route path="/Ct_product" element={<Ct_product />} />
         {/* <Route path="/OfferBanner" element={<OfferBanner />} /> */}
@@ -74,7 +74,6 @@ function App() {
         <Route path="/Admin/AdAbout" element={<AdAbout />} />
         <Route path="/Admin/AdReviews" element={<AdReviews />} />
         <Route path="/Admin/AdBanner" element={<AdBanner />} />
-      
       </Routes>
       <Footer />
     </Router>

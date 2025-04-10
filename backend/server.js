@@ -3,7 +3,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
 require("dotenv").config();
-
+const routes = require('./routes');
 const app = express();
 
 // Middleware
@@ -11,6 +11,7 @@ app.use(cors());
 app.use(express.json()); // Parse JSON requests
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
 app.use(express.static("public"));
+app.use('/api', routes);
 
 // Serve static files (for profile pictures, etc.)
 app.use("/public", express.static(path.join(__dirname, "public")));
