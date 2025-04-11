@@ -215,10 +215,10 @@ export default function Ct_product() {
           </div>
         </div>
       ) : products.length > 0 ? (
-        <div className="row p-5">
-          {products.map((product, index) => (
-            <div className="col-md-3" key={product._id}>
-              <div className="card product-card text-center">
+        <div className="row row-cols-1 row-cols-md-4 g-4 p-5">
+        {products.map((product, index) => (
+          <div className="col" key={product._id}>
+            <div className="card product-card text-center h-100">
                 <img
                   src={
                     product.productImage

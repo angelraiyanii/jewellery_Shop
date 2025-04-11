@@ -72,5 +72,13 @@ router.put("/update/:cartItemId", async (req, res) => {
     res.status(500).json({ error: "Failed to update cart" });
   }
 });
-
+// Clear user's cart
+router.delete("/clear/:userId", async (req, res) => {
+  try {
+    await Cart.deleteMany({ userId: req.params.userId });
+    res.status(200).json({ message: "Cart cleared successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to clear cart" });
+  }
+});
 module.exports = router;

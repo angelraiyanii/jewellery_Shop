@@ -3,23 +3,21 @@ const router = express.Router();
 const Contact = require('../models/ContactModel');
 const nodemailer = require('nodemailer');
 
-// Configure nodemailer with more detailed settings
-// Using Gmail example - for production use environment variables
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // true for 465, false for other ports
+  secure: false, 
   auth: {
-    user: process.env.EMAIL_USER || 'veloraa1920@gmail.com', // replace with your actual email
-    pass: process.env.EMAIL_PASSWORD || 'rtep efdy gepi yrqj' // replace with your app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD 
   },
   tls: {
-    rejectUnauthorized: false // helps with some connection issues
-  }
+    rejectUnauthorized: false   }
 });
 
-// Test email connection when server starts
+
 transporter.verify(function(error, success) {
   if (error) {
     console.log('Email server connection error:', error);
@@ -28,14 +26,12 @@ transporter.verify(function(error, success) {
   }
 });
 
-// @route   POST api/contact/submit
-// @desc    Submit a new contact form
-// @access  Public
+
 router.post('/submit', async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
 
-    // Create new contact entry
+
     const newContact = new Contact({
       name,
       email,
@@ -43,7 +39,6 @@ router.post('/submit', async (req, res) => {
       message
     });
 
-    // Save to database
     const savedContact = await newContact.save();
 
     res.status(201).json({
@@ -53,8 +48,7 @@ router.post('/submit', async (req, res) => {
     });
   } catch (err) {
     console.error('Contact form submission error:', err);
-    
-    // Handle validation errors specifically
+
     if (err.name === 'ValidationError') {
       const messages = Object.values(err.errors).map(val => val.message);
       return res.status(400).json({
@@ -70,9 +64,6 @@ router.post('/submit', async (req, res) => {
   }
 });
 
-// @route   GET api/contact
-// @desc    Get all contact submissions (Admin only)
-// @access  Private (should be protected with authentication middleware)
 router.get('/', async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ createdAt: -1 });
@@ -90,9 +81,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   PUT api/contact/:id
-// @desc    Update contact status and send reply email (Admin only)
-// @access  Private (should be protected with authentication middleware)
 router.put('/:id', async (req, res) => {
   try {
     const { status, reply } = req.body;
@@ -100,7 +88,7 @@ router.put('/:id', async (req, res) => {
     const updateData = {};
     
     if (status) {
-      if (!['New', 'In Progress', 'Resolved'].includes(status)) {
+      if (!['New', 'In Progress', ' Resolved'].includes(status)) {
         return res.status(400).json({
           success: false,
           message: 'Invalid status value'
@@ -111,6 +99,9 @@ router.put('/:id', async (req, res) => {
     
     if (reply) {
       updateData.reply = reply;
+      // Set status to "Resolved" when a reply is sent
+      // This automatically updates the status without needing "In Progress"
+      updateData.status = 'Resolved';
     }
     
     const contact = await Contact.findById(req.params.id);
@@ -122,21 +113,19 @@ router.put('/:id', async (req, res) => {
       });
     }
     
-    // Update contact in database
     const updatedContact = await Contact.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true, runValidators: true }
     );
     
-    // Send email if reply is provided
     if (reply) {
       // Prepare email data
       const mailOptions = {
-        from: process.env.EMAIL_USER || 'your-email@gmail.com',
+        from: process.env.EMAIL_USER ,
         to: contact.email,
         subject: 'Response to Your Inquiry',
-    html: `
+        html: `
 <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 5px;">
   <h2 style="color: #333;">Hello ${contact.name},</h2>
   <p>Thank you for reaching out to us. We have received your inquiry and here is our response:</p>
@@ -184,9 +173,7 @@ router.put('/:id', async (req, res) => {
         });
       }
     }
-    
-    // If no reply provided, just return success for the update
-    res.json({
+     res.json({
       success: true,
       data: updatedContact
     });
@@ -201,7 +188,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Add this route to your contactRoutes.js file
 router.get('/confirm-seen/:id', async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
@@ -209,8 +195,7 @@ router.get('/confirm-seen/:id', async (req, res) => {
     if (!contact) {
       return res.redirect("http://localhost:5173/login?status=error&message=Contact not found");
     }
-    
-    // Update the contact status
+  
     await Contact.findByIdAndUpdate(
       req.params.id,
       { 
@@ -220,7 +205,6 @@ router.get('/confirm-seen/:id', async (req, res) => {
       }
     );
     
-    // Redirect to the frontend login page with success message - same pattern as your email verification
     return res.redirect("http://localhost:5173/login?status=success&message=Message marked as seen successfully!");
   } catch (error) {
     console.error('Error updating seen status:', error);

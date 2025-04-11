@@ -16,15 +16,15 @@ const AdContact = () => {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
-  
+
   useEffect(() => {
     fetchInquiries();
   }, []);
-  
+
   const fetchInquiries = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/ContactModel");
+      const response = await fetch("http://localhost:5000/api/contact");
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
@@ -49,23 +49,22 @@ const AdContact = () => {
   };
 
   const handleReplyChange = (e) => setReply(e.target.value);
-  
+
   const sendReply = async () => {
     if (!reply.trim()) {
       alert("Please enter a reply before sending.");
       return;
     }
-    
+
     try {
       setSendingReply(true);
       const response = await fetch(
-        `http://localhost:5000/api/ContactModel/${selectedInquiry._id}`,
+        `http://localhost:5000/api/contact/${selectedInquiry._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            status: "In Progress",
-            reply: reply 
+          body: JSON.stringify({
+            reply: reply,
           }),
         }
       );
@@ -94,7 +93,7 @@ const AdContact = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-  
+
   const filteredInquiries = inquiries.filter((inquiry) => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
@@ -112,7 +111,7 @@ const AdContact = () => {
     if (window.confirm("Are you sure you want to delete this inquiry?")) {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/ContactModel/${id}`,
+          `http://localhost:5000/api/contact/${id}`,
           {
             method: "DELETE",
           }
@@ -135,7 +134,7 @@ const AdContact = () => {
   if (loading)
     return <div className="p-4 text-center">Loading inquiries...</div>;
   if (error) return <div className="p-4 text-center text-danger">{error}</div>;
-  
+
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -150,7 +149,7 @@ const AdContact = () => {
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
   }
-  
+
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">Contact Inquiries</h2>
@@ -177,7 +176,6 @@ const AdContact = () => {
             <th>Phone</th>
             <th>Date</th>
             <th>Status</th>
-            <th>Seen</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -208,22 +206,6 @@ const AdContact = () => {
                   </span>
                 </td>
                 <td>
-                  <span 
-                    className={`px-2 py-1 rounded text-xs font-semibold ${
-                      inquiry.seen ? "bg-success text-white" : "bg-secondary text-white"
-                    }`}
-                  >
-                    {inquiry.seen ? (
-                      <span>
-                        Seen
-                        {inquiry.seenAt && <small className="d-block">
-                          {new Date(inquiry.seenAt).toLocaleDateString()}
-                        </small>}
-                      </span>
-                    ) : "Not Seen"}
-                  </span>
-                </td>
-                <td>
                   <button
                     onClick={() => viewInquiryDetails(inquiry)}
                     className="btn btn-info btn-sm me-2"
@@ -250,7 +232,8 @@ const AdContact = () => {
           )}
         </tbody>
       </table>
-      {/* Pagination start*/}
+
+      {/* Pagination */}
       {filteredInquiries.length > 0 && (
         <div className="row mt-3">
           <div className="col-md-12 d-flex justify-content-center">
@@ -302,7 +285,7 @@ const AdContact = () => {
           </div>
         </div>
       )}
-      {/* Pagination end*/}
+
       {/* Modal */}
       {showModal && selectedInquiry && (
         <div className="fixed inset-0 bg-black bg-opacity-50 d-flex align-items-center justify-content-center p-4">
@@ -343,21 +326,6 @@ const AdContact = () => {
                 {selectedInquiry.status || "New"}
               </span>
             </div>
-            <div className="mb-3">
-              <strong>Seen:</strong>{" "}
-              <span 
-                className={`px-2 py-1 rounded text-xs font-semibold ${
-                  selectedInquiry.seen ? "bg-success text-white" : "bg-secondary text-white"
-                }`}
-              >
-                {selectedInquiry.seen ? "Yes" : "No"}
-              </span>
-              {selectedInquiry.seenAt && (
-                <small className="ms-2">
-                  on {new Date(selectedInquiry.seenAt).toLocaleString()}
-                </small>
-              )}
-            </div>
 
             <div className="mb-3">
               <label>Your Reply:</label>
@@ -368,8 +336,8 @@ const AdContact = () => {
                 onChange={handleReplyChange}
                 placeholder="Type your reply here..."
               ></textarea>
-              <small className="text-muted mt-1 d-block">
-                This reply will be sent to the user's email with a button to mark it as seen.
+              <small className="text-danger mt-1 d-block">
+                This reply will be sent to the user's Email.
               </small>
             </div>
 
