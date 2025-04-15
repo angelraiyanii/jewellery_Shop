@@ -77,7 +77,20 @@ router.post("/add-Login", upload.single("profilePic"), async (req, res) => {
 // Update User by ID
 router.put("/:id", upload.single("profilePic"), async (req, res) => {
   try {
-    const { fullname, email, mobile, password, gender, pincode, address } = req.body;
+    const { fullname, email, mobile, gender, pincode, address, password, oldPassword } = req.body;
+
+    // If password change is requested, verify old password first
+    if (password && oldPassword) {
+      const user = await UserSchema.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if old password matches the stored password
+      if (oldPassword !== user.password) {
+        return res.status(400).json({ message: "Old password is incorrect" });
+      }
+    }
 
     const updateData = {
       fullname,

@@ -96,7 +96,6 @@ export class Account extends Component {
     if (!this.state.oldPassword)
       errors.oldPassword = "Old Password is required";
     if (!this.state.password) errors.password = "New Password is required";
-    else if (this.state.password) errors.password = "Password is required";
     if (!this.state.confirmPassword)
       errors.confirmPassword = "Confirm Password is required";
     else if (this.state.password !== this.state.confirmPassword)
@@ -167,7 +166,10 @@ export class Account extends Component {
           localStorage.getItem("admintoken");
         const response = await axios.put(
           `http://localhost:5000/api/Login/${this.state.userId}`,
-          { password: this.state.password },
+          {
+            password: this.state.password,
+            oldPassword: this.state.oldPassword,
+          },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -182,11 +184,30 @@ export class Account extends Component {
         });
       } catch (error) {
         console.error("Error updating password:", error);
-        alert("Failed to update password.");
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          // Show the specific error message from the server
+          alert(error.response.data.message);
+
+          // If old password is incorrect, clear only password fields but keep the form open
+          if (error.response.data.message === "Old password is incorrect") {
+            this.setState({
+              oldPassword: "",
+              errors: {
+                ...this.state.errors,
+                oldPassword: "Old password is incorrect",
+              },
+            });
+          }
+        } else {
+          alert("Failed to update password.");
+        }
       }
     }
   };
-
   toggleExit = () => {
     this.setState({ showProfileForm: false, showPasswordForm: false });
   };
