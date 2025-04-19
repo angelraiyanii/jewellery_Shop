@@ -1168,6 +1168,17 @@ const AdPro = () => {
                                       </div>
                                       <div className="col-md-8">
                                         <div className="mt-5">
+                                          <button
+                                            className="btn btn-sm btn-outline-secondary float-end"
+                                            onClick={() =>
+                                              setViewSingleProduct(false)
+                                            }
+                                            style={{ marginTop: "-15px" }}
+                                          >
+                                            <i className="fas fa-times"></i>{" "}
+                                            Hide Details
+                                          </button>
+
                                           <div className="product-details text-start">
                                             <h6
                                               className="fw-bold"

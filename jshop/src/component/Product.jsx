@@ -11,7 +11,7 @@ export class Product extends Component {
     super();
     this.state = {
       products: [],
-      categories: [], // Store all categories
+      categories: [],
       liked: [],
       isLoading: false,
       isLikeLoading: false,
@@ -36,20 +36,16 @@ export class Product extends Component {
       );
       const allProducts = productsResponse.data;
 
-      // Get names of active categories
       const activeCategoryNames = categories
         .filter((category) => category.categoryStatus === "Active")
         .map((category) => category.categoryName);
 
-      // Filter products to only include those from active categories
       const filteredProducts = allProducts.filter((product) =>
         activeCategoryNames.includes(product.categoryName)
       );
 
-      // Initialize liked array
       const liked = Array(filteredProducts.length).fill(false);
 
-      // Check wishlist if user is logged in
       const userData =
         localStorage.getItem("user") || localStorage.getItem("admin");
       if (userData) {
@@ -208,10 +204,10 @@ export class Product extends Component {
             <p>No active products available at the moment.</p>
           </div>
         ) : (
-          <div className="row p-3">
+          <div className="row row-cols-1 row-cols-md-4 g-4">
             {products.map((product, index) => (
-              <div className="col-md-3" key={product._id}>
-                <div className="card product-card text-center">
+              <div  className="col" key={product._id}>
+               <div className="card product-card text-center h-100">
                   <img
                     src={
                       product.productImage
