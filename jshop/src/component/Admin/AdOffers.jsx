@@ -5,8 +5,8 @@ import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 const AdOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState("add"); // add, edit, view
+  const [showForm, setShowForm] = useState(false);
+  const [formType, setFormType] = useState("add"); // add, edit, view
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -38,8 +38,8 @@ const AdOffers = () => {
     }
   };
 
-  const openModal = (type, offer = null) => {
-    setModalType(type);
+  const openForm = (type, offer = null) => {
+    setFormType(type);
     setErrors({});
 
     if (type === "add") {
@@ -78,7 +78,14 @@ const AdOffers = () => {
       }
     }
 
-    setShowModal(true);
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setSelectedOffer(null);
+    setErrors({});
+    setPreviewImage("");
   };
 
   const handleChange = (e) => {
@@ -144,11 +151,11 @@ const AdOffers = () => {
         data.append("banner", formData.banner);
       }
 
-      if (modalType === "add") {
+      if (formType === "add") {
         await axios.post("http://localhost:5000/api/OfferModel/add", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-      } else if (modalType === "edit") {
+      } else if (formType === "edit") {
         await axios.put(
           `http://localhost:5000/api/OfferModel/update/${selectedOffer._id}`,
           data,
@@ -158,7 +165,7 @@ const AdOffers = () => {
         );
       }
 
-      setShowModal(false);
+      closeForm();
       fetchOffers();
     } catch (error) {
       console.error("Error saving offer:", error);
@@ -193,11 +200,232 @@ const AdOffers = () => {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Offers</h2>
-        <button className="btn btn-primary" onClick={() => openModal("add")}>
+        <button className="btn btn-primary" onClick={() => openForm("add")}>
           <FaPlus className="me-2" /> Add New Offer
         </button>
       </div>
 
+      {/* Form Section - Above Table */}
+      {showForm && (
+        <div className="card mb-4">
+          <div className="card-body">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4>
+                {formType === "add"
+                  ? "Add New Offer"
+                  : formType === "edit"
+                  ? "Edit Offer"
+                  : "View Offer Details"}
+              </h4>
+              <button className="btn btn-close" onClick={closeForm}></button>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">Title</label>
+                  <input
+                    type="text"
+                    className={`form-control ${
+                      errors.title ? "is-invalid" : ""
+                    }`}
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    readOnly={formType === "view"}
+                  />
+                  {errors.title && (
+                    <div className="invalid-feedback">{errors.title}</div>
+                  )}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Offer Code</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={
+                      formData.title
+                        ? formData.title.replace(/\s+/g, "").toUpperCase()
+                        : ""
+                    }
+                    readOnly
+                  />
+                  <small className="text-muted">
+                    Auto-generated from title
+                  </small>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Description</label>
+                <textarea
+                  className={`form-control ${
+                    errors.description ? "is-invalid" : ""
+                  }`}
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  readOnly={formType === "view"}
+                  rows="2"
+                ></textarea>
+                {errors.description && (
+                  <div className="invalid-feedback">{errors.description}</div>
+                )}
+              </div>
+
+              <div className="row mb-3">
+                <div className="col-md-4">
+                  <label className="form-label">Discount Rate (%)</label>
+                  <input
+                    type="number"
+                    className={`form-control ${
+                      errors.rate ? "is-invalid" : ""
+                    }`}
+                    name="rate"
+                    value={formData.rate}
+                    onChange={handleChange}
+                    readOnly={formType === "view"}
+                  />
+                  {errors.rate && (
+                    <div className="invalid-feedback">{errors.rate}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Max Discount (₹)</label>
+                  <input
+                    type="number"
+                    className={`form-control ${
+                      errors.maxdiscount ? "is-invalid" : ""
+                    }`}
+                    name="maxdiscount"
+                    value={formData.maxdiscount}
+                    onChange={handleChange}
+                    readOnly={formType === "view"}
+                  />
+                  {errors.maxdiscount && (
+                    <div className="invalid-feedback">{errors.maxdiscount}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Min. Order Total (₹)</label>
+                  <input
+                    type="number"
+                    className={`form-control ${
+                      errors.orderTotal ? "is-invalid" : ""
+                    }`}
+                    name="orderTotal"
+                    value={formData.orderTotal}
+                    onChange={handleChange}
+                    readOnly={formType === "view"}
+                  />
+                  {errors.orderTotal && (
+                    <div className="invalid-feedback">{errors.orderTotal}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="row mb-3">
+                <div className="col-md-4">
+                  <label className="form-label">Start Date</label>
+                  <input
+                    type="date"
+                    className={`form-control ${
+                      errors.startDate ? "is-invalid" : ""
+                    }`}
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    readOnly={formType === "view"}
+                  />
+                  {errors.startDate && (
+                    <div className="invalid-feedback">{errors.startDate}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">End Date</label>
+                  <input
+                    type="date"
+                    className={`form-control ${
+                      errors.endDate ? "is-invalid" : ""
+                    }`}
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    readOnly={formType === "view"}
+                  />
+                  {errors.endDate && (
+                    <div className="invalid-feedback">{errors.endDate}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Status</label>
+                  <select
+                    className="form-select"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    disabled={formType === "view"}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Banner Image</label>
+                {formType !== "view" && (
+                  <input
+                    type="file"
+                    className="form-control mb-2"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                )}
+                {previewImage && (
+                  <div className="text-center mt-2">
+                    <img
+                      src={previewImage}
+                      alt="Banner Preview"
+                      className="img-fluid"
+                      style={{ maxHeight: "200px" }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {formType !== "view" && (
+                <div className="d-flex justify-content-end mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-secondary me-2"
+                    onClick={closeForm}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {formType === "add" ? "Add Offer" : "Update Offer"}
+                  </button>
+                </div>
+              )}
+
+              {formType === "view" && (
+                <div className="d-flex justify-content-end mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={closeForm}
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Table Section */}
       {loading ? (
         <div className="text-center">Loading offers...</div>
       ) : (
@@ -239,13 +467,13 @@ const AdOffers = () => {
                       <div className="btn-group">
                         <button
                           className="btn btn-sm btn-info me-1"
-                          onClick={() => openModal("view", offer)}
+                          onClick={() => openForm("view", offer)}
                         >
                           <FaEye />
                         </button>
                         <button
                           className="btn btn-sm btn-warning me-1"
-                          onClick={() => openModal("edit", offer)}
+                          onClick={() => openForm("edit", offer)}
                         >
                           <FaEdit />
                         </button>
@@ -268,229 +496,6 @@ const AdOffers = () => {
               )}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* Modal for Add/Edit/View */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: "600px" }}>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4>
-                {modalType === "add"
-                  ? "Add New Offer"
-                  : modalType === "edit"
-                  ? "Edit Offer"
-                  : "View Offer Details"}
-              </h4>
-              <button
-                className="btn btn-close"
-                onClick={() => setShowModal(false)}
-              ></button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label className="form-label">Title</label>
-                  <input
-                    type="text"
-                    className={`form-control ${
-                      errors.title ? "is-invalid" : ""
-                    }`}
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    readOnly={modalType === "view"}
-                  />
-                  {errors.title && (
-                    <div className="invalid-feedback">{errors.title}</div>
-                  )}
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">Offer Code</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={
-                      formData.title
-                        ? formData.title.replace(/\s+/g, "").toUpperCase()
-                        : ""
-                    }
-                    readOnly
-                  />
-                  <small className="text-muted">
-                    Auto-generated from title
-                  </small>
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Description</label>
-                <textarea
-                  className={`form-control ${
-                    errors.description ? "is-invalid" : ""
-                  }`}
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  readOnly={modalType === "view"}
-                  rows="2"
-                ></textarea>
-                {errors.description && (
-                  <div className="invalid-feedback">{errors.description}</div>
-                )}
-              </div>
-
-              <div className="row mb-3">
-                <div className="col-md-4">
-                  <label className="form-label">Discount Rate (%)</label>
-                  <input
-                    type="number"
-                    className={`form-control ${
-                      errors.rate ? "is-invalid" : ""
-                    }`}
-                    name="rate"
-                    value={formData.rate}
-                    onChange={handleChange}
-                    readOnly={modalType === "view"}
-                  />
-                  {errors.rate && (
-                    <div className="invalid-feedback">{errors.rate}</div>
-                  )}
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">Max Discount (₹)</label>
-                  <input
-                    type="number"
-                    className={`form-control ${
-                      errors.maxdiscount ? "is-invalid" : ""
-                    }`}
-                    name="maxdiscount"
-                    value={formData.maxdiscount}
-                    onChange={handleChange}
-                    readOnly={modalType === "view"}
-                  />
-                  {errors.maxdiscount && (
-                    <div className="invalid-feedback">{errors.maxdiscount}</div>
-                  )}
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">Min. Order Total (₹)</label>
-                  <input
-                    type="number"
-                    className={`form-control ${
-                      errors.orderTotal ? "is-invalid" : ""
-                    }`}
-                    name="orderTotal"
-                    value={formData.orderTotal}
-                    onChange={handleChange}
-                    readOnly={modalType === "view"}
-                  />
-                  {errors.orderTotal && (
-                    <div className="invalid-feedback">{errors.orderTotal}</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="row mb-3">
-                <div className="col-md-4">
-                  <label className="form-label">Start Date</label>
-                  <input
-                    type="date"
-                    className={`form-control ${
-                      errors.startDate ? "is-invalid" : ""
-                    }`}
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    readOnly={modalType === "view"}
-                  />
-                  {errors.startDate && (
-                    <div className="invalid-feedback">{errors.startDate}</div>
-                  )}
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">End Date</label>
-                  <input
-                    type="date"
-                    className={`form-control ${
-                      errors.endDate ? "is-invalid" : ""
-                    }`}
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    readOnly={modalType === "view"}
-                  />
-                  {errors.endDate && (
-                    <div className="invalid-feedback">{errors.endDate}</div>
-                  )}
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">Status</label>
-                  <select
-                    className="form-select"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    disabled={modalType === "view"}
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Banner Image</label>
-                {modalType !== "view" && (
-                  <input
-                    type="file"
-                    className="form-control mb-2"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                )}
-                {previewImage && (
-                  <div className="text-center mt-2">
-                    <img
-                      src={previewImage}
-                      alt="Banner Preview"
-                      className="img-fluid"
-                      style={{ maxHeight: "200px" }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {modalType !== "view" && (
-                <div className="d-flex justify-content-end mt-3">
-                  <button
-                    type="button"
-                    className="btn btn-secondary me-2"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    {modalType === "add" ? "Add Offer" : "Update Offer"}
-                  </button>
-                </div>
-              )}
-
-              {modalType === "view" && (
-                <div className="d-flex justify-content-end mt-3">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
-            </form>
-          </div>
         </div>
       )}
     </div>

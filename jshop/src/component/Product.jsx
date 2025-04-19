@@ -53,9 +53,9 @@ export class Product extends Component {
         const userId = user.id;
 
         try {
-          const wishlistResponse = await axios.get(
+        const wishlistResponse = await axios.get(
             `http://localhost:5000/api/WishlistModel/${userId}`
-          );
+        );
           const wishlistProductIds = wishlistResponse.data.map(
             (item) => item.productId._id
           );
@@ -206,8 +206,8 @@ export class Product extends Component {
         ) : (
           <div className="row row-cols-1 row-cols-md-4 g-4">
             {products.map((product, index) => (
-              <div  className="col" key={product._id}>
-               <div className="card product-card text-center h-100">
+              <div className="col" key={product._id}>
+                <div className="card product-card text-center h-100">
                   <img
                     src={
                       product.productImage

@@ -3,7 +3,6 @@ import { Carousel } from "react-bootstrap";
 import axios from "axios";
 import s1 from "./images/slide1.png"; // Default fallback image
 
-// OfferCodeBox component should be moved outside the OfferBanner component
 const OfferCodeBox = ({ offer }) => {
   const [copied, setCopied] = useState(false);
 
@@ -12,7 +11,7 @@ const OfferCodeBox = ({ offer }) => {
       offer.title ? offer.title.replace(/\s+/g, "").toUpperCase() : ""
     );
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Show "Copied!" for 2 seconds
+    setTimeout(() => setCopied(false), 2000); 
   };
 
   return (
@@ -40,7 +39,6 @@ const OfferBanner = () => {
   const [activeOffers, setActiveOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch active offers on mount
   useEffect(() => {
     const fetchOffers = async () => {
       try {
@@ -48,7 +46,7 @@ const OfferBanner = () => {
         const response = await axios.get(
           "http://localhost:5000/api/OfferModel/active"
         );
-        console.log("Active offers:", response.data); // For debugging
+        console.log("Active offers:", response.data); 
         setActiveOffers(response.data);
         setLoading(false);
       } catch (error) {
@@ -60,7 +58,6 @@ const OfferBanner = () => {
     fetchOffers();
   }, []);
 
-  // Log status - helpful for debugging
   useEffect(() => {
     console.log("Active offers state:", activeOffers);
   }, [activeOffers]);
