@@ -189,10 +189,6 @@ export class Account extends Component {
           error.response.data &&
           error.response.data.message
         ) {
-          // Show the specific error message from the server
-          alert(error.response.data.message);
-
-          // If old password is incorrect, clear only password fields but keep the form open
           if (error.response.data.message === "Old password is incorrect") {
             this.setState({
               oldPassword: "",

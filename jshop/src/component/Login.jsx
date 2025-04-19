@@ -65,7 +65,7 @@ const Login = () => {
           if (data.user.role === "admin" || data.user.role === "user") {
             navigate("/");
             window.location.reload();
-          }
+          } cc
           setSuccessMessage("");
         }, 3000);
       } catch (error) {

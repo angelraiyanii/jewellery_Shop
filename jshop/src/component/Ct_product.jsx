@@ -145,10 +145,7 @@ export default function Ct_product() {
         "Error updating wishlist:",
         error.response?.data || error.message
       );
-      alert(
-        "Failed to update wishlist: " +
-          (error.response?.data?.error || error.message)
-      );
+      alert("This Product is already in your Wishlist...😍");
     } finally {
       setIsLikeLoading(false);
     }

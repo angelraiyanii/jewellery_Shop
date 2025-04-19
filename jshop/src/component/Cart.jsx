@@ -14,11 +14,11 @@ export class Cart extends Component {
       offerCode: "",
       offerError: "",
       discount: 0,
+      appliedOffer: null, // Store details of the applied offer
       showCheckoutForm: false,
       userData: null,
     };
   }
-
   componentDidMount() {
     this.fetchCartItems();
     this.fetchUserData();
@@ -136,29 +136,59 @@ export class Cart extends Component {
     const subtotal = parseFloat(this.calculateSubtotal());
     return (subtotal - this.state.discount).toFixed(2);
   };
-
   handleOfferCodeChange = (e) => {
     this.setState({ offerCode: e.target.value, offerError: "" });
   };
 
-  applyDiscount = () => {
-    const { offerCode } = this.state;
+  applyDiscount = async () => {
+    const { offerCode, cartItems } = this.state;
 
     if (!offerCode) {
       this.setState({ offerError: "Please enter an offer code" });
       return;
     }
-    if (offerCode.toLowerCase() === "save200") {
-      this.setState({ discount: 200, offerError: "" });
-    } else {
-      this.setState({ offerError: "Invalid offer code", discount: 0 });
+
+    try {
+      const subtotal = this.calculateSubtotal();
+      const response = await axios.post(
+        "http://localhost:5000/api/OfferModel/verify",
+        {
+          offerCode: offerCode.replace(/\s+/g, "").toUpperCase(), // Normalize code to match OfferBanner and backend
+          cartTotal: subtotal,
+        }
+      );
+
+      if (response.data.success) {
+        this.setState({
+          discount: parseFloat(response.data.discountAmount),
+          appliedOffer: {
+            title: response.data.offer.title,
+            rate: response.data.offer.rate,
+            maxDiscount: response.data.offer.maxdiscount,
+          },
+          offerError: "",
+        });
+      } else {
+        this.setState({
+          discount: 0,
+          appliedOffer: null,
+          offerError: response.data.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error verifying offer code:", error);
+      this.setState({
+        discount: 0,
+        appliedOffer: null,
+        offerError:
+          error.response?.data?.message || "Failed to verify offer code",
+      });
     }
   };
 
   proceedToCheckout = () => {
     this.setState({ showCheckoutForm: true });
   };
-
   render() {
     const {
       cartItems,
@@ -167,6 +197,7 @@ export class Cart extends Component {
       offerCode,
       offerError,
       discount,
+      appliedOffer,
       showCheckoutForm,
       userData,
     } = this.state;
@@ -209,11 +240,10 @@ export class Cart extends Component {
         />
       );
     }
-
     return (
       <div className="container mt-5">
         <h2 className="mb-4">
-          <FaShoppingCart  className="me-2 text-primary" /> Your Shopping Cart
+          <FaShoppingCart className="me-2 text-primary" /> Your Shopping Cart
         </h2>
         <div className="row">
           <div className="col-md-8">
@@ -302,9 +332,10 @@ export class Cart extends Component {
                 {offerError && (
                   <div className="text-danger mb-3">{offerError}</div>
                 )}
-                {discount > 0 && (
+                {discount > 0 && appliedOffer && (
                   <div className="alert alert-success">
-                    Discount of ₹{discount.toFixed(2)} applied!
+                    {appliedOffer.rate}% OFF applied with code{" "}
+                    {appliedOffer.title}! Discount: ₹{discount.toFixed(2)}
                   </div>
                 )}
               </div>
@@ -323,7 +354,7 @@ export class Cart extends Component {
                   <p>Free</p>
                 </div>
                 {discount > 0 && (
-                  <div className="d-flex justify-content-between text-success">
+                  <div className="d-flex justify-content-between text-danger">
                     <p>Discount:</p>
                     <p>-₹{discount.toFixed(2)}</p>
                   </div>
@@ -358,42 +389,227 @@ class CheckoutForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: props.userData?.email || "",
-      phone: props.userData?.phone || "",
-      address: props.userData?.address || "",
-      zip: props.userData?.zip || "",
+      selectedAddress: "",
       errors: {},
+      addresses: [],
+      showAddressForm: false,
+      newAddress: {
+        label: "",
+        email: props.userData?.email || "",
+        phone: "",
+        fullAddress: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        isDefault: false,
+      },
     };
   }
 
   componentDidMount() {
     const { userData } = this.props;
+
+    // Initialize new address with user data if available
     if (userData) {
-      this.setState({
-        email: userData.email || "",
-        phone: userData.phone || "",
-        address: userData.address || "",
-        zip: userData.zip || "",
-      });
+      this.setState((prevState) => ({
+        newAddress: {
+          ...prevState.newAddress,
+          email: userData.email || "",
+          phone: userData.phone || "",
+        },
+      }));
     }
+
+    // Load addresses from localStorage
+    this.loadAddresses();
   }
 
-  handleChange = (e) => {
-    this.setState({ [e.target.name]: e.target.value });
+  loadAddresses = () => {
+    try {
+      const userData =
+        localStorage.getItem("user") || localStorage.getItem("admin");
+      if (!userData) return;
+
+      const user = JSON.parse(userData);
+      const userId = user.id;
+
+      // Get addresses from localStorage using userId as key
+      const storedAddresses = localStorage.getItem(`addresses_${userId}`);
+      const addresses = storedAddresses ? JSON.parse(storedAddresses) : [];
+
+      this.setState({
+        addresses,
+        // If there's a default address, select it
+        selectedAddress:
+          addresses.find((addr) => addr.isDefault)?.id ||
+          addresses[0]?.id ||
+          "",
+      });
+    } catch (error) {
+      console.error("Error loading addresses:", error);
+    }
+  };
+
+  saveAddress = () => {
+    try {
+      const { newAddress, addresses } = this.state;
+      const userData =
+        localStorage.getItem("user") || localStorage.getItem("admin");
+      if (!userData) return;
+
+      const user = JSON.parse(userData);
+      const userId = user.id;
+
+      // Validate form fields
+      const addressErrors = {};
+      if (!newAddress.label) addressErrors.label = "Label is required";
+      if (!newAddress.email) addressErrors.email = "Email is required";
+      if (!newAddress.phone) addressErrors.phone = "Phone number is required";
+      else if (!/^\d{10}$/.test(newAddress.phone))
+        addressErrors.phone = "Phone number must be 10 digits";
+      if (!newAddress.fullAddress)
+        addressErrors.fullAddress = "Address is required";
+      if (!newAddress.city) addressErrors.city = "City is required";
+      if (!newAddress.state) addressErrors.state = "State is required";
+      if (!newAddress.zipCode) addressErrors.zipCode = "ZIP code is required";
+      else if (!/^\d{6}$/.test(newAddress.zipCode))
+        addressErrors.zipCode = "ZIP code must be 6 digits";
+
+      if (Object.keys(addressErrors).length > 0) {
+        this.setState({ addressErrors });
+        return;
+      }
+
+      // Create new address with id
+      const addressToSave = {
+        ...newAddress,
+        id: Date.now().toString(),
+      };
+
+      // If it's the first address or marked as default, set as default
+      if (addresses.length === 0 || addressToSave.isDefault) {
+        // Update all other addresses to not be default
+        const updatedAddresses = addresses.map((addr) => ({
+          ...addr,
+          isDefault: false,
+        }));
+
+        // Add the new address
+        updatedAddresses.push(addressToSave);
+        localStorage.setItem(
+          `addresses_${userId}`,
+          JSON.stringify(updatedAddresses)
+        );
+
+        this.setState({
+          addresses: updatedAddresses,
+          selectedAddress: addressToSave.id,
+          showAddressForm: false,
+          newAddress: {
+            label: "",
+            email: this.props.userData?.email || "",
+            phone: "",
+            fullAddress: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            isDefault: false,
+          },
+          addressErrors: {},
+        });
+      } else {
+        // Just add the new address
+        const updatedAddresses = [...addresses, addressToSave];
+        localStorage.setItem(
+          `addresses_${userId}`,
+          JSON.stringify(updatedAddresses)
+        );
+
+        this.setState({
+          addresses: updatedAddresses,
+          selectedAddress: addressToSave.id,
+          showAddressForm: false,
+          newAddress: {
+            label: "",
+            email: this.props.userData?.email || "",
+            phone: "",
+            fullAddress: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            isDefault: false,
+          },
+          addressErrors: {},
+        });
+      }
+    } catch (error) {
+      console.error("Error saving address:", error);
+    }
+  };
+
+  removeAddress = (addressId) => {
+    try {
+      const { addresses } = this.state;
+      const userData =
+        localStorage.getItem("user") || localStorage.getItem("admin");
+      if (!userData) return;
+
+      const user = JSON.parse(userData);
+      const userId = user.id;
+
+      // Filter out the address to remove
+      const updatedAddresses = addresses.filter(
+        (addr) => addr.id !== addressId
+      );
+
+      // If we're removing the selected address, select another one if available
+      let selectedAddress = this.state.selectedAddress;
+      if (selectedAddress === addressId) {
+        selectedAddress =
+          updatedAddresses.find((addr) => addr.isDefault)?.id ||
+          updatedAddresses[0]?.id ||
+          "";
+      }
+
+      localStorage.setItem(
+        `addresses_${userId}`,
+        JSON.stringify(updatedAddresses)
+      );
+
+      this.setState({
+        addresses: updatedAddresses,
+        selectedAddress,
+      });
+    } catch (error) {
+      console.error("Error removing address:", error);
+    }
+  };
+
+  handleAddressChange = (e) => {
+    this.setState({ selectedAddress: e.target.value });
+  };
+
+  handleNewAddressChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    this.setState((prevState) => ({
+      newAddress: {
+        ...prevState.newAddress,
+        [name]: type === "checkbox" ? checked : value,
+      },
+      addressErrors: {
+        ...prevState.addressErrors,
+        [name]: null,
+      },
+    }));
   };
 
   validateForm = () => {
     let newErrors = {};
 
-    if (!this.state.email) newErrors.email = "Email is required";
-    if (!this.state.phone) newErrors.phone = "Phone number is required";
-    else if (!/^\d{10}$/.test(this.state.phone))
-      newErrors.phone = "Phone number must be 10 digits";
-
-    if (!this.state.address) newErrors.address = "Address is required";
-    if (!this.state.zip) newErrors.zip = "ZIP code is required";
-    else if (!/^\d{6}$/.test(this.state.zip))
-      newErrors.zip = "ZIP code must be 6 digits";
+    if (!this.state.selectedAddress && this.state.addresses.length > 0)
+      newErrors.address = "Please select an address";
+    else if (this.state.addresses.length === 0)
+      newErrors.address = "Please add at least one shipping address";
 
     this.setState({ errors: newErrors });
     return Object.keys(newErrors).length === 0;
@@ -402,41 +618,85 @@ class CheckoutForm extends Component {
   handleCheckout = async () => {
     if (this.validateForm()) {
       try {
-        const userData =
-          localStorage.getItem("user") || localStorage.getItem("admin");
+        const userData = localStorage.getItem("user") || localStorage.getItem("admin");
         const user = JSON.parse(userData);
         const userId = user.id;
+  
+        // Find the selected address
+        const selectedAddress = this.state.addresses.find(
+          (addr) => addr.id === this.state.selectedAddress
+        );
+  
+        if (!selectedAddress) {
+          this.setState({
+            errors: { address: "Please select a shipping address" }
+          });
+          return;
+        }
+  
+        // Get applied offer name if available
+        const appliedOffer = localStorage.getItem('appliedOffer') 
+          ? JSON.parse(localStorage.getItem('appliedOffer')).title 
+          : '';
+  
+        // Format the order data
         const orderData = {
           userId,
-          email: this.state.email,
-          phone: this.state.phone,
-          address: this.state.address,
-          zip: this.state.zip,
+          email: selectedAddress.email,
+          phone: selectedAddress.phone,
+          address: selectedAddress.fullAddress,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          zip: selectedAddress.zipCode,
           totalAmount: this.props.total,
           discount: this.props.discount,
+          offerName: appliedOffer
         };
-
+  
+        // Show loading indicator
+        this.setState({ isProcessing: true });
+  
         const response = await axios.post(
           "http://localhost:5000/api/orders/create",
           orderData
         );
-
+  
         console.log("Order created:", response.data);
-        alert("Order placed successfully!");
-        await axios.delete(
-          `http://localhost:5000/api/CartModel/clear/${userId}`
-        );
-        window.location.href = "/";
+        
+        // Clear cart and applied offer from localStorage
+        localStorage.removeItem('appliedOffer');
+        
+        // Show success message
+        alert("Order placed successfully! Your order ID is: " + response.data.orderId);
+        
+        // Redirect to order confirmation page or home
+        window.location.href = "/order-confirmation/" + response.data.orderId;
+        // Or to home page
+        // window.location.href = "/";
       } catch (error) {
         console.error("Error creating order:", error);
-        alert("Failed to place order: " + error.message);
+        this.setState({ isProcessing: false });
+        alert("Failed to place order: " + (error.response?.data?.message || error.message));
       }
     }
   };
 
+  toggleAddressForm = () => {
+    this.setState((prevState) => ({
+      showAddressForm: !prevState.showAddressForm,
+    }));
+  };
+
   render() {
     const { subtotal, discount, total } = this.props;
-    const { errors } = this.state;
+    const {
+      errors,
+      addresses,
+      selectedAddress,
+      showAddressForm,
+      newAddress,
+      addressErrors,
+    } = this.state;
 
     return (
       <div className="container mt-5">
@@ -445,75 +705,240 @@ class CheckoutForm extends Component {
           <div className="col-md-8">
             <div className="card mb-4">
               <div className="card-body">
-                <h5 className="card-title">Shipping Information</h5>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Email</label>
-                    <input
-                      type="email"
-                      className={`form-control ${
-                        errors.email ? "is-invalid" : ""
-                      }`}
-                      name="email"
-                      value={this.state.email}
-                      onChange={this.handleChange}
-                      placeholder="Enter your email"
-                    />
-                    {errors.email && (
-                      <div className="invalid-feedback">{errors.email}</div>
-                    )}
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Phone Number</label>
-                    <input
-                      type="text"
-                      className={`form-control ${
-                        errors.phone ? "is-invalid" : ""
-                      }`}
-                      name="phone"
-                      value={this.state.phone}
-                      onChange={this.handleChange}
-                      placeholder="Enter 10-digit phone number"
-                    />
-                    {errors.phone && (
-                      <div className="invalid-feedback">{errors.phone}</div>
-                    )}
-                  </div>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="card-title mb-0">Shipping Address</h5>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={this.toggleAddressForm}
+                  >
+                    {showAddressForm ? "Cancel" : "Add New Address"}
+                  </button>
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Shipping Address</label>
-                  <textarea
-                    className={`form-control ${
-                      errors.address ? "is-invalid" : ""
-                    }`}
-                    name="address"
-                    value={this.state.address}
-                    onChange={this.handleChange}
-                    placeholder="Enter shipping address"
-                    rows="3"
-                  />
-                  {errors.address && (
-                    <div className="invalid-feedback">{errors.address}</div>
-                  )}
-                </div>
-                <div className="row">
-                  <div className="col-md-12 mb-3">
-                    <label className="form-label">ZIP Code</label>
-                    <input
-                      type="text"
-                      className={`form-control ${
-                        errors.zip ? "is-invalid" : ""
-                      }`}
-                      name="zip"
-                      value={this.state.zip}
-                      onChange={this.handleChange}
-                      placeholder="Enter 6-digit ZIP code"
-                    />
-                    {errors.zip && (
-                      <div className="invalid-feedback">{errors.zip}</div>
-                    )}
+
+                {/* New Address Form */}
+                {showAddressForm && (
+                  <div className="border p-3 mb-3 rounded">
+                    <h6 className="mb-3">Add New Address</h6>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Address Label</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            addressErrors?.label ? "is-invalid" : ""
+                          }`}
+                          name="label"
+                          value={newAddress.label}
+                          onChange={this.handleNewAddressChange}
+                          placeholder="Home, Work, etc."
+                        />
+                        {addressErrors?.label && (
+                          <div className="invalid-feedback">
+                            {addressErrors.label}
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Email</label>
+                        <input
+                          type="email"
+                          className={`form-control ${
+                            addressErrors?.email ? "is-invalid" : ""
+                          }`}
+                          name="email"
+                          value={newAddress.email}
+                          onChange={this.handleNewAddressChange}
+                          placeholder="Enter your email"
+                        />
+                        {addressErrors?.email && (
+                          <div className="invalid-feedback">
+                            {addressErrors.email}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Phone Number</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            addressErrors?.phone ? "is-invalid" : ""
+                          }`}
+                          name="phone"
+                          value={newAddress.phone}
+                          onChange={this.handleNewAddressChange}
+                          placeholder="Enter 10-digit phone number"
+                        />
+                        {addressErrors?.phone && (
+                          <div className="invalid-feedback">
+                            {addressErrors.phone}
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">State</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            addressErrors?.state ? "is-invalid" : ""
+                          }`}
+                          name="state"
+                          value={newAddress.state}
+                          onChange={this.handleNewAddressChange}
+                          placeholder="State"
+                        />
+                        {addressErrors?.state && (
+                          <div className="invalid-feedback">
+                            {addressErrors.state}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Full Address</label>
+                      <textarea
+                        className={`form-control ${
+                          addressErrors?.fullAddress ? "is-invalid" : ""
+                        }`}
+                        name="fullAddress"
+                        value={newAddress.fullAddress}
+                        onChange={this.handleNewAddressChange}
+                        placeholder="Enter full address with street, building, etc."
+                        rows="2"
+                      />
+                      {addressErrors?.fullAddress && (
+                        <div className="invalid-feedback">
+                          {addressErrors.fullAddress}
+                        </div>
+                      )}
+                    </div>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">City</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            addressErrors?.city ? "is-invalid" : ""
+                          }`}
+                          name="city"
+                          value={newAddress.city}
+                          onChange={this.handleNewAddressChange}
+                          placeholder="City"
+                        />
+                        {addressErrors?.city && (
+                          <div className="invalid-feedback">
+                            {addressErrors.city}
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">ZIP Code</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            addressErrors?.zipCode ? "is-invalid" : ""
+                          }`}
+                          name="zipCode"
+                          value={newAddress.zipCode}
+                          onChange={this.handleNewAddressChange}
+                          placeholder="Enter 6-digit ZIP code"
+                        />
+                        {addressErrors?.zipCode && (
+                          <div className="invalid-feedback">
+                            {addressErrors.zipCode}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mb-3 form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="defaultAddress"
+                        name="isDefault"
+                        checked={newAddress.isDefault}
+                        onChange={this.handleNewAddressChange}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="defaultAddress"
+                      >
+                        Set as default address
+                      </label>
+                    </div>
+                    <button
+                      className="btn btn-success"
+                      onClick={this.saveAddress}
+                    >
+                      Save Address
+                    </button>
                   </div>
-                </div>
+                )}
+
+                {/* Existing Addresses */}
+                {addresses.length > 0 ? (
+                  <div className="mb-3">
+                    {errors.address && (
+                      <div className="alert alert-danger">{errors.address}</div>
+                    )}
+                    {addresses.map((address) => (
+                      <div key={address.id} className="card mb-2">
+                        <div className="card-body p-3">
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="radio"
+                              name="shippingAddress"
+                              id={`address-${address.id}`}
+                              value={address.id}
+                              checked={selectedAddress === address.id}
+                              onChange={this.handleAddressChange}
+                            />
+                            <label
+                              className="form-check-label"
+                              htmlFor={`address-${address.id}`}
+                            >
+                              <strong>{address.label}</strong>{" "}
+                              {address.isDefault && (
+                                <span className="badge bg-primary">
+                                  Default
+                                </span>
+                              )}
+                              <div className="mt-1">
+                                <p className="mb-0">
+                                  <i className="bi bi-envelope"></i>{" "}
+                                  {address.email}
+                                </p>
+                                <p className="mb-0">
+                                  <i className="bi bi-telephone"></i>{" "}
+                                  {address.phone}
+                                </p>
+                                <p className="mb-0 mt-1">
+                                  {address.fullAddress}
+                                </p>
+                                <p className="mb-0">
+                                  {address.city}, {address.state} -{" "}
+                                  {address.zipCode}
+                                </p>
+                              </div>
+                            </label>
+                          </div>
+                          <button
+                            className="btn btn-sm btn-outline-danger mt-2"
+                            onClick={() => this.removeAddress(address.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="alert alert-warning">
+                    No saved addresses. Please add a shipping address.
+                  </div>
+                )}
               </div>
             </div>
           </div>

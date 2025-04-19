@@ -28,8 +28,8 @@ const aboutRoutes = require("./aboutRoutes");
 router.use("/AboutModel", aboutRoutes);
 
 //offer
-const offerRoutes = require("./offerRoutes");
-router.use("/OfferModel", offerRoutes);
+const offerRoutes = require('./offerRoutes');
+router.use('/OfferModel', offerRoutes);
 
 // Contact 
 const contactRoutes = require("./contactRoutes"); 
@@ -44,10 +44,12 @@ const wishlistRoutes = require("./wishlistRoutes");
 router.use("/WishlistModel", wishlistRoutes);
 
 // OTP 
-// const otpRoutes = require("./models/otpRoutes");
-// router.use("/models/OtpModel", otpRoutes); 
 const otpRoutes = require('./otpRoutes');
 router.use('/OtpModel', otpRoutes);
+
+//Order
+const orderRouttes = require('./orderRoutes');
+router.use('./OrderModel',orderRouttes);
 
 router.use((req, res) => {
   res.status(404).json({ error: "Route not found." });

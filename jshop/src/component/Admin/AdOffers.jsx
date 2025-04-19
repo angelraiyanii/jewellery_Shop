@@ -1,614 +1,498 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../../App.css";
+import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 
 const AdOffers = () => {
   const [offers, setOffers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(3);
-  const [editOfferId, setEditOfferId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("add"); // add, edit, view
+  const [selectedOffer, setSelectedOffer] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
-    maxdiscount: "",
     description: "",
     rate: "",
+    maxdiscount: "",
+    orderTotal: "",
     startDate: "",
     endDate: "",
-    orderTotal: "",
-    banner: "",
+    status: "Active",
+    banner: null,
   });
+  const [previewImage, setPreviewImage] = useState("");
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState({ text: "", type: "" });
-  const [expandedOfferId, setExpandedOfferId] = useState(null); // New state to track expanded row
 
-  // Fetch all offers when component mounts
   useEffect(() => {
     fetchOffers();
   }, []);
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+
   const fetchOffers = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       const response = await axios.get("http://localhost:5000/api/OfferModel/");
-      const offerList = Array.isArray(response.data)
-        ? response.data
-        : response.data.data;
-      setOffers(offerList);
-      setIsLoading(false);
+      setOffers(response.data);
+      setLoading(false);
     } catch (error) {
-      setMessage({
-        text: "Failed to fetch offers: " + error.message,
-        type: "danger",
+      console.error("Error fetching offers:", error);
+      setLoading(false);
+    }
+  };
+
+  const openModal = (type, offer = null) => {
+    setModalType(type);
+    setErrors({});
+
+    if (type === "add") {
+      setFormData({
+        title: "",
+        description: "",
+        rate: "",
+        maxdiscount: "",
+        orderTotal: "",
+        startDate: "",
+        endDate: "",
+        status: "Active",
+        banner: null,
       });
-      setIsLoading(false);
+      setPreviewImage("");
+    } else {
+      // For edit and view
+      setSelectedOffer(offer);
+      setFormData({
+        title: offer.title,
+        description: offer.description,
+        rate: offer.rate,
+        maxdiscount: offer.maxdiscount,
+        orderTotal: offer.orderTotal,
+        startDate: new Date(offer.startDate).toISOString().split("T")[0],
+        endDate: new Date(offer.endDate).toISOString().split("T")[0],
+        status: offer.status,
+      });
+
+      if (offer.banner) {
+        setPreviewImage(
+          `http://localhost:5000/public/images/banner_images/${offer.banner}`
+        );
+      } else {
+        setPreviewImage("");
+      }
+    }
+
+    setShowModal(true);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, banner: file });
+      setPreviewImage(URL.createObjectURL(file));
     }
   };
 
   const validateForm = () => {
-    let tempErrors = {};
-    if (!formData.title.trim()) tempErrors.title = "Title is required.";
-    if (!formData.description.trim())
-      tempErrors.description = "Description is required.";
-    if (!formData.maxdiscount.trim())
-      tempErrors.maxdiscount = "Maximum Discount Amount is required.";
-    if (!formData.rate.trim()) tempErrors.rate = "Rate is required.";
-    else if (!/^\d+%$/.test(formData.rate))
-      tempErrors.rate = "Rate should be in percentage format (e.g., 30%).";
-    if (!formData.startDate) tempErrors.startDate = "Start Date is required.";
-    if (!formData.endDate) tempErrors.endDate = "End Date is required.";
-    else {
-      const today = new Date().toISOString().split("T")[0];
-      if (formData.endDate < today && !isEditMode)
-        tempErrors.endDate = "Date cannot be in the past.";
-    }
-    if (!formData.orderTotal.trim())
-      tempErrors.orderTotal = "Order Total is required.";
-    if (!isEditMode && !formData.banner.trim())
-      tempErrors.banner = "Banner is required.";
+    const newErrors = {};
 
-    setErrors(tempErrors);
-    return Object.keys(tempErrors).length === 0;
+    if (!formData.title) newErrors.title = "Title is required";
+    if (!formData.description)
+      newErrors.description = "Description is required";
+    if (!formData.rate) newErrors.rate = "Discount rate is required";
+    else if (isNaN(formData.rate) || formData.rate <= 0 || formData.rate > 100)
+      newErrors.rate = "Discount rate must be between 1 and 100";
+
+    if (!formData.maxdiscount)
+      newErrors.maxdiscount = "Maximum discount is required";
+    else if (isNaN(formData.maxdiscount) || formData.maxdiscount <= 0)
+      newErrors.maxdiscount = "Maximum discount must be a positive number";
+
+    if (!formData.orderTotal)
+      newErrors.orderTotal = "Minimum order total is required";
+    else if (isNaN(formData.orderTotal) || formData.orderTotal < 0)
+      newErrors.orderTotal =
+        "Minimum order total must be a non-negative number";
+
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    else if (new Date(formData.startDate) > new Date(formData.endDate))
+      newErrors.endDate = "End date must be after start date";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      try {
-        setIsLoading(true);
-        let response;
 
-        if (isEditMode) {
-          response = await axios.put(
-            `http://localhost:5000/api/OfferModel/update/${editOfferId}`,
-            formData
-          );
-          if (response.data.success) {
-            setMessage({
-              text: "Offer updated successfully!",
-              type: "success",
-            });
-            fetchOffers();
-          }
-        } else {
-          response = await axios.post(
-            "http://localhost:5000/api/OfferModel/add",
-            formData
-          );
-          if (response.data.success) {
-            setMessage({ text: "Offer added successfully!", type: "success" });
-            fetchOffers();
-          }
+    if (!validateForm()) return;
+
+    try {
+      const data = new FormData();
+
+      // Append text fields
+      Object.keys(formData).forEach((key) => {
+        if (key !== "banner" || formData[key] === null) {
+          data.append(key, formData[key]);
         }
-        resetForm();
-      } catch (error) {
-        setMessage({
-          text: `Failed to ${isEditMode ? "update" : "add"} offer: ${
-            error.response?.data?.message || error.message
-          }`,
-          type: "danger",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const handleEdit = (id) => {
-    const offerToEdit = offers.find((offer) => offer._id === id);
-    if (offerToEdit) {
-      const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toISOString().split("T")[0];
-      };
-      setFormData({
-        title: offerToEdit.title,
-        description: offerToEdit.description,
-        maxdiscount: offerToEdit.maxdiscount || "",
-        rate: offerToEdit.discount || "",
-        startDate: formatDate(
-          offerToEdit.startDate || offerToEdit.validity || new Date()
-        ),
-        endDate: formatDate(
-          offerToEdit.endDate || offerToEdit.validity || new Date()
-        ),
-        orderTotal: offerToEdit.orderTotal || "",
-        banner: offerToEdit.banner || "",
       });
-      setEditOfferId(id);
-      setIsEditMode(true);
-      setShowForm(true);
+
+      // Append file if exists
+      if (formData.banner instanceof File) {
+        data.append("banner", formData.banner);
+      }
+
+      if (modalType === "add") {
+        await axios.post("http://localhost:5000/api/OfferModel/add", data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else if (modalType === "edit") {
+        await axios.put(
+          `http://localhost:5000/api/OfferModel/update/${selectedOffer._id}`,
+          data,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+      }
+
+      setShowModal(false);
+      fetchOffers();
+    } catch (error) {
+      console.error("Error saving offer:", error);
+      alert(
+        "Failed to save offer: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this offer?")) {
       try {
-        setIsLoading(true);
-        const response = await axios.delete(
-          `http://localhost:5000/api/offers/delete/${id}`
-        );
-        if (response.data.success) {
-          setMessage({ text: "Offer deleted successfully!", type: "success" });
-          fetchOffers();
-        }
+        await axios.delete(`http://localhost:5000/api/OfferModel/delete/${id}`);
+        fetchOffers();
       } catch (error) {
-        setMessage({
-          text:
-            "Failed to delete offer: " +
-            (error.response?.data?.message || error.message),
-          type: "danger",
-        });
-      } finally {
-        setIsLoading(false);
+        console.error("Error deleting offer:", error);
+        alert(
+          "Failed to delete offer: " +
+            (error.response?.data?.message || error.message)
+        );
       }
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      maxdiscount: "",
-      description: "",
-      rate: "",
-      startDate: "",
-      endDate: "",
-      orderTotal: "",
-      banner: "",
-    });
-    setIsEditMode(false);
-    setEditOfferId(null);
-    setShowForm(false);
-    setErrors({});
+  const formatDate = (dateString) => {
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, banner: file.name });
-    }
-  };
-
-  // Toggle expanded row
-  const handleView = (id) => {
-    setExpandedOfferId(expandedOfferId === id ? null : id);
-  };
-  const filteredOffers = offers.filter((offer) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      offer.title?.toLowerCase().includes(searchLower) ||
-      offer.description?.toLowerCase().includes(searchLower) ||
-      offer.discount?.toLowerCase().includes(searchLower) ||
-      offer.maxdiscount?.toString().toLowerCase().includes(searchLower) ||
-      offer.orderTotal?.toString().toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredOffers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredOffers.length / itemsPerPage);
-
-  // Generate page numbers
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
   return (
     <div className="container mt-4">
-      <h2 className="text-center mb-4">Admin Offers</h2>
-
-      {message.text && (
-        <div
-          className={`alert alert-${message.type} alert-dismissible fade show`}
-          role="alert"
-        >
-          {message.text}
-          <button
-            type="button"
-            className="btn-close"
-            onClick={() => setMessage({ text: "", type: "" })}
-          ></button>
-        </div>
-      )}
-
-      <div className="d-flex justify-content-between mb-3">
-        <div className="d-flex">
-          <input
-            type="text"
-            className="form-control me-2"
-            placeholder="🔎Search offers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <button
-          className="btn btn-success"
-          onClick={() => {
-            if (isEditMode || showForm) {
-              resetForm();
-            } else {
-              setShowForm(true);
-            }
-          }}
-        >
-          {showForm
-            ? isEditMode
-              ? "Cancel Edit"
-              : "Close Add Offer Form"
-            : "Add New Offer"}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Offers</h2>
+        <button className="btn btn-primary" onClick={() => openModal("add")}>
+          <FaPlus className="me-2" /> Add New Offer
         </button>
       </div>
 
-      {showForm && (
-        <div className="card p-3 mb-4">
-          <h4>{isEditMode ? "Edit Offer" : "Add New Offer"}</h4>
-          <form onSubmit={handleSubmit}>
-            <div className="row">
-              <div className="col-4 mb-2">
-                <label>Title:</label>
-                <input
-                  type="text"
-                  className={`form-control ${errors.title ? "is-invalid" : ""}`}
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                />
-                {errors.title && (
-                  <div className="invalid-feedback">{errors.title}</div>
-                )}
+      {loading ? (
+        <div className="text-center">Loading offers...</div>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-striped table-bordered">
+            <thead className="bg-dark text-white">
+              <tr>
+                <th>Title</th>
+                <th>Discount</th>
+                <th>Min. Order</th>
+                <th>Validity</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {offers.length > 0 ? (
+                offers.map((offer) => (
+                  <tr key={offer._id}>
+                    <td>{offer.title}</td>
+                    <td>
+                      {offer.rate}% (up to ₹{offer.maxdiscount})
+                    </td>
+                    <td>₹{offer.orderTotal}</td>
+                    <td>
+                      {formatDate(offer.startDate)} -{" "}
+                      {formatDate(offer.endDate)}
+                    </td>
+                    <td>
+                      <span
+                        className={`badge bg-${
+                          offer.status === "Active" ? "success" : "danger"
+                        }`}
+                      >
+                        {offer.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="btn-group">
+                        <button
+                          className="btn btn-sm btn-info me-1"
+                          onClick={() => openModal("view", offer)}
+                        >
+                          <FaEye />
+                        </button>
+                        <button
+                          className="btn btn-sm btn-warning me-1"
+                          onClick={() => openModal("edit", offer)}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleDelete(offer._id)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    No offers found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modal for Add/Edit/View */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "600px" }}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4>
+                {modalType === "add"
+                  ? "Add New Offer"
+                  : modalType === "edit"
+                  ? "Edit Offer"
+                  : "View Offer Details"}
+              </h4>
+              <button
+                className="btn btn-close"
+                onClick={() => setShowModal(false)}
+              ></button>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">Title</label>
+                  <input
+                    type="text"
+                    className={`form-control ${
+                      errors.title ? "is-invalid" : ""
+                    }`}
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    readOnly={modalType === "view"}
+                  />
+                  {errors.title && (
+                    <div className="invalid-feedback">{errors.title}</div>
+                  )}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Offer Code</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={
+                      formData.title
+                        ? formData.title.replace(/\s+/g, "").toUpperCase()
+                        : ""
+                    }
+                    readOnly
+                  />
+                  <small className="text-muted">
+                    Auto-generated from title
+                  </small>
+                </div>
               </div>
-              <div className="col-4 mb-2">
-                <label>Description:</label>
+
+              <div className="mb-3">
+                <label className="form-label">Description</label>
                 <textarea
                   className={`form-control ${
                     errors.description ? "is-invalid" : ""
                   }`}
                   name="description"
                   value={formData.description}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
+                  readOnly={modalType === "view"}
+                  rows="2"
                 ></textarea>
                 {errors.description && (
                   <div className="invalid-feedback">{errors.description}</div>
                 )}
               </div>
-              <div className="col-4 mb-2">
-                <label>Rate:</label>
-                <input
-                  type="text"
-                  className={`form-control ${errors.rate ? "is-invalid" : ""}`}
-                  name="rate"
-                  value={formData.rate}
-                  onChange={handleInputChange}
-                  placeholder="e.g., 30%"
-                />
-                {errors.rate && (
-                  <div className="invalid-feedback">{errors.rate}</div>
-                )}
-              </div>
-            </div>
-            <div className="row">
-              <div className="col-4 mb-2">
-                <label>Maximum Discount Amount:</label>
-                <input
-                  type="text"
-                  className={`form-control ${
-                    errors.maxdiscount ? "is-invalid" : ""
-                  }`}
-                  name="maxdiscount"
-                  value={formData.maxdiscount}
-                  onChange={handleInputChange}
-                />
-                {errors.maxdiscount && (
-                  <div className="invalid-feedback">{errors.maxdiscount}</div>
-                )}
-              </div>
-              <div className="col-4 mb-2">
-                <label>Order Total:</label>
-                <input
-                  type="text"
-                  className={`form-control ${
-                    errors.orderTotal ? "is-invalid" : ""
-                  }`}
-                  name="orderTotal"
-                  value={formData.orderTotal}
-                  onChange={handleInputChange}
-                />
-                {errors.orderTotal && (
-                  <div className="invalid-feedback">{errors.orderTotal}</div>
-                )}
-              </div>
-              <div className="col-4 mb-2">
-                <label>Start Date:</label>
-                <input
-                  type="date"
-                  className={`form-control ${
-                    errors.startDate ? "is-invalid" : ""
-                  }`}
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleInputChange}
-                />
-                {errors.startDate && (
-                  <div className="invalid-feedback">{errors.startDate}</div>
-                )}
-              </div>
-            </div>
-            <div className="row">
-              <div className="col-4 mb-2">
-                <label>End Date:</label>
-                <input
-                  type="date"
-                  className={`form-control ${
-                    errors.endDate ? "is-invalid" : ""
-                  }`}
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleInputChange}
-                />
-                {errors.endDate && (
-                  <div className="invalid-feedback">{errors.endDate}</div>
-                )}
-              </div>
-              <div className="col-4 mb-2">
-                <label>Banner:</label>
-                <input
-                  type="file"
-                  className={`form-control ${
-                    errors.banner ? "is-invalid" : ""
-                  }`}
-                  name="banner"
-                  onChange={handleFileChange}
-                />
-                {errors.banner && (
-                  <div className="invalid-feedback">{errors.banner}</div>
-                )}
-              </div>
-              <div className="col-4 mt-4">
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span>
-                      <span
-                        className="spinner-border spinner-border-sm"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>{" "}
-                      {isEditMode ? "Updating..." : "Adding..."}
-                    </span>
-                  ) : isEditMode ? (
-                    "Update Offer"
-                  ) : (
-                    "Add Offer"
+
+              <div className="row mb-3">
+                <div className="col-md-4">
+                  <label className="form-label">Discount Rate (%)</label>
+                  <input
+                    type="number"
+                    className={`form-control ${
+                      errors.rate ? "is-invalid" : ""
+                    }`}
+                    name="rate"
+                    value={formData.rate}
+                    onChange={handleChange}
+                    readOnly={modalType === "view"}
+                  />
+                  {errors.rate && (
+                    <div className="invalid-feedback">{errors.rate}</div>
                   )}
-                </button>
-                {isEditMode && (
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Max Discount (₹)</label>
+                  <input
+                    type="number"
+                    className={`form-control ${
+                      errors.maxdiscount ? "is-invalid" : ""
+                    }`}
+                    name="maxdiscount"
+                    value={formData.maxdiscount}
+                    onChange={handleChange}
+                    readOnly={modalType === "view"}
+                  />
+                  {errors.maxdiscount && (
+                    <div className="invalid-feedback">{errors.maxdiscount}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Min. Order Total (₹)</label>
+                  <input
+                    type="number"
+                    className={`form-control ${
+                      errors.orderTotal ? "is-invalid" : ""
+                    }`}
+                    name="orderTotal"
+                    value={formData.orderTotal}
+                    onChange={handleChange}
+                    readOnly={modalType === "view"}
+                  />
+                  {errors.orderTotal && (
+                    <div className="invalid-feedback">{errors.orderTotal}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="row mb-3">
+                <div className="col-md-4">
+                  <label className="form-label">Start Date</label>
+                  <input
+                    type="date"
+                    className={`form-control ${
+                      errors.startDate ? "is-invalid" : ""
+                    }`}
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    readOnly={modalType === "view"}
+                  />
+                  {errors.startDate && (
+                    <div className="invalid-feedback">{errors.startDate}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">End Date</label>
+                  <input
+                    type="date"
+                    className={`form-control ${
+                      errors.endDate ? "is-invalid" : ""
+                    }`}
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    readOnly={modalType === "view"}
+                  />
+                  {errors.endDate && (
+                    <div className="invalid-feedback">{errors.endDate}</div>
+                  )}
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Status</label>
+                  <select
+                    className="form-select"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    disabled={modalType === "view"}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Banner Image</label>
+                {modalType !== "view" && (
+                  <input
+                    type="file"
+                    className="form-control mb-2"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                )}
+                {previewImage && (
+                  <div className="text-center mt-2">
+                    <img
+                      src={previewImage}
+                      alt="Banner Preview"
+                      className="img-fluid"
+                      style={{ maxHeight: "200px" }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {modalType !== "view" && (
+                <div className="d-flex justify-content-end mt-3">
                   <button
                     type="button"
-                    className="btn btn-secondary ms-2"
-                    onClick={resetForm}
-                    disabled={isLoading}
+                    className="btn btn-secondary me-2"
+                    onClick={() => setShowModal(false)}
                   >
                     Cancel
                   </button>
-                )}
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {isLoading && !showForm ? (
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-      ) : (
-        <table className="table table-bordered">
-          <thead className="thead table-bordered">
-            <tr>
-              <th>Offer ID</th>
-              <th>Title</th>
-              <th>Discount</th>
-              <th>Validity</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan="6" className="text-center">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </td>
-              </tr>
-            ) : currentItems.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center">
-                  {searchTerm
-                    ? "No matching offers found"
-                    : "No offers available"}
-                </td>
-              </tr>
-            ) : (
-              currentItems.map((offer) => (
-                <React.Fragment key={offer._id}>
-                  <tr>
-                    <td>{offer._id}</td>
-                    <td>{offer.title}</td>
-                    <td>{offer.discount}</td>
-                    <td>
-                      {new Date(
-                        offer.validity || offer.endDate
-                      ).toLocaleDateString()}
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${
-                          new Date(offer.validity || offer.endDate) >=
-                          new Date()
-                            ? "bg-success"
-                            : "bg-danger"
-                        }`}
-                      >
-                        {new Date(offer.validity || offer.endDate) >= new Date()
-                          ? "Active"
-                          : "Expired"}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-primary me-2"
-                        onClick={() => handleView(offer._id)}
-                      >
-                        {expandedOfferId === offer._id ? "Hide" : "View"}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-info me-2"
-                        onClick={() => handleEdit(offer._id)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(offer._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                  {expandedOfferId === offer._id && (
-                    <tr>
-                      <td colSpan="6">
-                        <div className="p-3 bg-light">
-                          <h5>Offer Details</h5>
-                          <p>
-                            <strong>Description:</strong> {offer.description}
-                          </p>
-                          <p>
-                            <strong>Maximum Discount:</strong>{" "}
-                            {offer.maxdiscount || "N/A"}
-                          </p>
-                          <p>
-                            <strong>Order Total:</strong>{" "}
-                            {offer.orderTotal || "N/A"}
-                          </p>
-                          <p>
-                            <strong>Start Date:</strong>{" "}
-                            {new Date(
-                              offer.startDate || offer.validity
-                            ).toLocaleDateString()}
-                          </p>
-                          <p>
-                            <strong>End Date:</strong>{" "}
-                            {new Date(
-                              offer.endDate || offer.validity
-                            ).toLocaleDateString()}
-                          </p>
-                          <p>
-                            <strong>Banner:</strong>{" "}
-                            {offer.banner || "No banner"}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))
-            )}
-          </tbody>
-        </table>
-      )}
-      {/* Pagination start*/}
-      {filteredOffers.length > 0 && (
-        <div className="row mt-3">
-          <div className="col-md-12 d-flex justify-content-center">
-            <nav>
-              <ul className="pagination">
-                <li
-                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    &laquo; Prev
+                  <button type="submit" className="btn btn-primary">
+                    {modalType === "add" ? "Add Offer" : "Update Offer"}
                   </button>
-                </li>
+                </div>
+              )}
 
-                {pageNumbers.map((number) => (
-                  <li
-                    key={number}
-                    className={`page-item ${
-                      currentPage === number ? "active" : ""
-                    }`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => handlePageChange(number)}
-                    >
-                      {number}
-                    </button>
-                  </li>
-                ))}
-
-                <li
-                  className={`page-item ${
-                    currentPage === totalPages ? "disabled" : ""
-                  }`}
-                >
+              {modalType === "view" && (
+                <div className="d-flex justify-content-end mt-3">
                   <button
-                    className="page-link"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowModal(false)}
                   >
-                    Next &raquo;
+                    Close
                   </button>
-                </li>
-              </ul>
-            </nav>
+                </div>
+              )}
+            </form>
           </div>
         </div>
       )}
-      {/* Pagination end*/}
     </div>
   );
 };

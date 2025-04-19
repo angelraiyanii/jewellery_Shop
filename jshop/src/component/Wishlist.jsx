@@ -347,7 +347,7 @@ export class Wishlist extends Component {
                               </div>
                               <div className="action-buttons">
                                 <Link
-                                  to={`/Ct_product/${item.productId?._id}`}
+                                  to={`/SinglePro/${item.productId?._id}`}
                                   className="btn btn-sm btn-outline-primary"
                                 >
                                   <FaEye /> View

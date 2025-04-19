@@ -20,7 +20,7 @@ import Ct_product from "./component/Ct_product";
 import OrderHistory from "./component/OrderHistory";
 import SinglePro from "./component/SinglePro";
 import Rating_Review from "./component/Rating_Review";
-// import OfferBanner from "./component/OfferBanner";
+import OfferBanner from "./component/OfferBanner";
 import AdCategory from "./component/Admin/AdCategory";
 import AdPro from "./component/Admin/AdPro";
 import AdUser from "./component/Admin/AdUser";
@@ -43,7 +43,7 @@ function App() {
               <Slider />
               <Category />
               <Product />
-              {/* <OfferBanner/> */}
+              <OfferBanner/>
             </>
           }
         />
@@ -63,7 +63,7 @@ function App() {
         <Route path="/ResetPassword" element={<ResetPassword />} />
         <Route path="/Rating_Review" element={<Rating_Review />} />
         <Route path="/Ct_product" element={<Ct_product />} />
-        {/* <Route path="/OfferBanner" element={<OfferBanner />} /> */}
+        <Route path="/OfferBanner" element={<OfferBanner />} />
         <Route path="/SinglePro/:productId" element={<SinglePro />} />
         <Route path="/Admin/AdCategory" element={<AdCategory />} />
         <Route path="/Admin/AdPro" element={<AdPro />} />
