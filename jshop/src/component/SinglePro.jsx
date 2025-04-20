@@ -2,9 +2,16 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { Component } from "react";
 import axios from "axios";
-import pro1 from "./images/pro2.png"; // Default image
-import { useParams } from "react-router-dom"; // Use hooks in a wrapper
+import pro1 from "./images/pro2.png";
+import { useParams } from "react-router-dom";
 import Rating_Review from "./Rating_Review";
+import {
+  FaStar,
+  FaRegStar,
+  FaStarHalfAlt,
+  FaTrash,
+  FaEdit,
+} from "react-icons/fa";
 
 class SingleProClass extends Component {
   constructor(props) {
@@ -12,20 +19,34 @@ class SingleProClass extends Component {
     this.state = {
       product: null,
       error: null,
-      isLoading: false, // For cart loading state
-      isLikeLoading: false, // For wishlist loading state
-      cartMessage: "", // Success message for cart
-      wishlistMessage: "", // Success message for wishlist
+      isLoading: false,
+      isLikeLoading: false,
+      cartMessage: "",
+      wishlistMessage: "",
+      quantity: 1,
+      averageRating: 0,
+      reviewCount: 0,
+      userReview: null,
+      reviewForm: {
+        rating: 0,
+        review: "",
+      },
+      isEditingReview: false,
+      reviewError: null, // Added for review error display
     };
   }
 
   componentDidMount() {
     this.fetchProduct();
+    this.fetchProductRating();
+    this.fetchUserReview();
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.productId !== this.props.productId) {
       this.fetchProduct();
+      this.fetchProductRating();
+      this.fetchUserReview();
     }
   }
 
@@ -38,92 +59,345 @@ class SingleProClass extends Component {
       this.setState({ product: response.data, loading: false });
     } catch (error) {
       console.error("Error fetching product:", error);
-      this.setState({
-        error: "Failed to load product",
-      });
+      this.setState({ error: "Failed to load product" });
     }
   };
 
-  // Add to Cart functionality
-  addToCart = async (productId) => {
-    this.setState({ isLoading: true, cartMessage: "" });
+  fetchProductRating = async () => {
+    const { productId } = this.props;
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/ReviewModel/rating/${productId}`
+      );
+      this.setState({
+        averageRating: response.data.averageRating,
+        reviewCount: response.data.reviewCount,
+      });
+    } catch (error) {
+      console.error("Error fetching product rating:", error);
+      if (error.response?.status === 404) {
+        this.setState({ averageRating: 0, reviewCount: 0 });
+      }
+    }
+  };
+
+  fetchUserReview = async () => {
+    const { productId } = this.props;
+    const userData =
+      localStorage.getItem("user") || localStorage.getItem("admin");
+    if (!userData) return;
 
     try {
-      const userData =
-        localStorage.getItem("user") || localStorage.getItem("admin");
-
-      if (!userData) {
-        window.location.href = "/login";
-        return;
-      }
       const user = JSON.parse(userData);
       const userId = user.id;
+      console.log(
+        "Fetching user review for productId:",
+        productId,
+        "userId:",
+        userId
+      ); // Debug
+      const response = await axios.get(
+        `http://localhost:5000/api/ReviewModel/product/${productId}`
+      );
+      console.log("User review response:", response.data); // Debug
+      const userReview = response.data.find(
+        (review) => review.userId._id === userId
+      );
+      if (userReview) {
+        this.setState({
+          userReview,
+          reviewForm: {
+            rating: userReview.rating,
+            review: userReview.review,
+          },
+          reviewError: null,
+        });
+      } else {
+        this.setState({ reviewError: null });
+      }
+    } catch (error) {
+      console.error("Error fetching user review:", error);
+      if (error.response?.status === 404) {
+        this.setState({ reviewError: null }); // No reviews, not an error
+      } else {
+        this.setState({
+          reviewError: `Failed to fetch reviews: ${
+            error.response?.data?.error || error.message
+          }`,
+        });
+      }
+    }
+  };
 
+  addToCart = async (productId) => {
+    this.setState({ isLoading: true, cartMessage: "" });
+    const userData =
+      localStorage.getItem("user") || localStorage.getItem("admin");
+    const token =
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("usertoken") ||
+      localStorage.getItem("admintoken");
+
+    if (!userData || !token) {
+      alert("Please log in to add to cart.");
+      window.location.href = "/login";
+      return;
+    }
+
+    let user;
+    try {
+      user = JSON.parse(userData);
+      console.log("addToCart user:", user, "token:", token);
+    } catch (error) {
+      console.error("Invalid user data in localStorage:", error);
+      alert("Session invalid. Please log in again.");
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
       const response = await axios.post(
         "http://localhost:5000/api/CartModel/add",
+        { userId: user.id, productId, quantity: this.state.quantity },
         {
-          userId,
-          productId,
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log("Added to cart response:", response.data);
       this.setState({ cartMessage: "Product added to cart successfully!" });
-      setTimeout(() => this.setState({ cartMessage: "" }), 3000); // Clear message after 3 seconds
+      setTimeout(() => this.setState({ cartMessage: "" }), 3000);
     } catch (error) {
-      console.error(
-        "Error adding to cart:",
-        error.response?.data || error.message
-      );
-      alert(
-        "Failed to add product to cart: " +
-          (error.response?.data?.error || error.message)
-      );
+      console.error("Error adding to cart:", error);
+      if (error.response?.status === 401) {
+        alert("Unauthorized: Invalid or expired session. Please log in again.");
+        window.location.href = "/login";
+      } else {
+        alert(
+          "Failed to add product to cart: " +
+            (error.response?.data?.error || error.message)
+        );
+      }
     } finally {
       this.setState({ isLoading: false });
     }
   };
 
-  // Add to Wishlist functionality
   addToWishlist = async (productId) => {
     this.setState({ isLikeLoading: true, wishlistMessage: "" });
+    const userData =
+      localStorage.getItem("user") || localStorage.getItem("admin");
+    const token =
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("usertoken") ||
+      localStorage.getItem("admintoken");
+
+    if (!userData || !token) {
+      alert("Please log in to add to wishlist.");
+      window.location.href = "/login";
+      return;
+    }
+
+    let user;
+    try {
+      user = JSON.parse(userData);
+      console.log("addToWishlist user:", user, "token:", token);
+    } catch (error) {
+      console.error("Invalid user data in localStorage:", error);
+      alert("Session invalid. Please log in again.");
+      window.location.href = "/login";
+      return;
+    }
 
     try {
-      const userData =
-        localStorage.getItem("user") || localStorage.getItem("admin");
-
-      if (!userData) {
-        window.location.href = "/login";
-        return;
-      }
-      const user = JSON.parse(userData);
-      const userId = user.id;
-
       const response = await axios.post(
         "http://localhost:5000/api/WishlistModel/add",
+        { userId: user.id, productId },
         {
-          userId,
-          productId,
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log("Added to wishlist response:", response.data);
       this.setState({
         wishlistMessage: "Product added to wishlist successfully!",
       });
-      setTimeout(() => this.setState({ wishlistMessage: "" }), 3000); // Clear message after 3 seconds
+      setTimeout(() => this.setState({ wishlistMessage: "" }), 3000);
     } catch (error) {
-      console.error(
-        "Error adding to wishlist:",
-        error.response?.data || error.message
-      );
-      alert(
-        "Failed to add product to wishlist: " +
-          (error.response?.data?.error || error.message)
-      );
+      console.error("Error adding to wishlist:", error);
+      if (error.response?.status === 401) {
+        alert("Unauthorized: Invalid or expired session. Please log in again.");
+        window.location.href = "/login";
+      } else {
+        alert(
+          "Failed to add product to wishlist: " +
+            (error.response?.data?.error || error.message)
+        );
+      }
     } finally {
       this.setState({ isLikeLoading: false });
     }
+  };
+
+  handleQuantityChange = (e) => {
+    const value = parseInt(e.target.value);
+    if (value > 0) {
+      this.setState({ quantity: value });
+    }
+  };
+
+  handleReviewChange = (e) => {
+    const { name, value } = e.target;
+    this.setState((prevState) => ({
+      reviewForm: { ...prevState.reviewForm, [name]: value },
+    }));
+  };
+
+  handleRatingChange = (rating) => {
+    this.setState((prevState) => ({
+      reviewForm: { ...prevState.reviewForm, rating },
+    }));
+  };
+
+  submitReview = async () => {
+    const { productId } = this.props;
+    const { reviewForm } = this.state;
+    const userData =
+      localStorage.getItem("user") || localStorage.getItem("admin");
+    const token =
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("usertoken") ||
+      localStorage.getItem("admintoken");
+
+    if (!userData || !token) {
+      alert("Please log in to submit a review.");
+      window.location.href = "/login";
+      return;
+    }
+
+    let user;
+    try {
+      user = JSON.parse(userData);
+      console.log("submitReview user:", user, "token:", token);
+    } catch (error) {
+      console.error("Invalid user data in localStorage:", error);
+      alert("Session invalid. Please log in again.");
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/ReviewModel/add",
+        {
+          productId,
+          rating: reviewForm.rating,
+          review: reviewForm.review,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      this.setState({
+        userReview: response.data.review,
+        reviewForm: { rating: 0, review: "" },
+        isEditingReview: false,
+        reviewError: null,
+      });
+      this.fetchProductRating();
+      this.fetchUserReview();
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      if (error.response?.status === 401) {
+        alert("Unauthorized: Invalid or expired session. Please log in again.");
+        window.location.href = "/login";
+      } else {
+        alert(
+          "Failed to submit review: " +
+            (error.response?.data?.error || error.message)
+        );
+      }
+    }
+  };
+
+  deleteReview = async (reviewId) => {
+    const userData =
+      localStorage.getItem("user") || localStorage.getItem("admin");
+    const token =
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("usertoken") ||
+      localStorage.getItem("admintoken");
+
+    if (!userData || !token) {
+      alert("Please log in to delete a review.");
+      window.location.href = "/login";
+      return;
+    }
+
+    let user;
+    try {
+      user = JSON.parse(userData);
+      console.log("deleteReview user:", user, "token:", token);
+    } catch (error) {
+      console.error("Invalid user data in localStorage:", error);
+      alert("Session invalid. Please log in again.");
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/ReviewModel/delete/${reviewId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      this.setState({
+        userReview: null,
+        reviewForm: { rating: 0, review: "" },
+        reviewError: null,
+      });
+      this.fetchProductRating();
+      this.fetchUserReview();
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      if (error.response?.status === 401) {
+        alert("Unauthorized: Invalid or expired session. Please log in again.");
+        window.location.href = "/login";
+      } else {
+        alert(
+          "Failed to delete review: " +
+            (error.response?.data?.error || error.message)
+        );
+      }
+    }
+  };
+
+  startEditingReview = () => {
+    this.setState({ isEditingReview: true });
+  };
+
+  renderStars = (value) => {
+    const stars = [];
+    const fullStars = Math.floor(value);
+    const hasHalfStar = value - fullStars >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <FaStar key={`star-${i}`} className="star-icon text-warning" />
+      );
+    }
+    if (hasHalfStar) {
+      stars.push(
+        <FaStarHalfAlt key="half-star" className="star-icon text-warning" />
+      );
+    }
+    const remainingStars = 5 - stars.length;
+    for (let i = 0; i < remainingStars; i++) {
+      stars.push(
+        <FaRegStar key={`empty-${i}`} className="star-icon text-warning" />
+      );
+    }
+    return stars;
   };
 
   render() {
@@ -134,7 +408,15 @@ class SingleProClass extends Component {
       isLikeLoading,
       cartMessage,
       wishlistMessage,
+      quantity,
+      averageRating,
+      reviewCount,
+      userReview,
+      reviewForm,
+      isEditingReview,
+      reviewError,
     } = this.state;
+    const { productId } = this.props;
 
     if (error) {
       return <div className="container mt-5 text-danger">{error}</div>;
@@ -164,6 +446,9 @@ class SingleProClass extends Component {
     };
 
     const displayProduct = product || defaultProduct;
+    const isLoggedIn = !!(
+      localStorage.getItem("user") || localStorage.getItem("admin")
+    );
 
     return (
       <>
@@ -181,6 +466,16 @@ class SingleProClass extends Component {
                 style={{ height: "200px", objectFit: "cover" }}
                 onError={(e) => (e.target.src = pro1)}
               />
+              {reviewCount > 0 && (
+                <div className="mt-3">
+                  <div className="d-flex justify-content-center align-items-center">
+                    <div className="stars">
+                      {this.renderStars(averageRating)}
+                    </div>
+                    <span className="ms-2">({reviewCount} reviews)</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="col-md-8">
               <div className="mt-5">
@@ -200,11 +495,7 @@ class SingleProClass extends Component {
                     </h5>
                     <span
                       className="border-start mx-2"
-                      style={{
-                        height: "1.5rem",
-                        display: "inline-block",
-                        borderColor: "#495057",
-                      }}
+                      style={{ height: "1.5rem", borderColor: "#495057" }}
                     />
                     <h6 style={{ color: "green" }}>
                       {displayProduct.discount}% off
@@ -293,7 +584,10 @@ class SingleProClass extends Component {
                         id="quantity"
                         name="quantity"
                         className="form-control w-25"
-                        defaultValue={1}
+                        value={quantity}
+                        onChange={this.handleQuantityChange}
+                        min="1"
+                        max={displayProduct.stock}
                       />
                     </div>
                     <input
@@ -310,7 +604,7 @@ class SingleProClass extends Component {
                       <button
                         className="btn btn-outline-danger"
                         onClick={() => this.addToCart(displayProduct._id)}
-                        disabled={isLoading}
+                        disabled={isLoading || displayProduct.stock < 1}
                       >
                         {isLoading ? "Adding..." : "Add to Cart"}
                       </button>
@@ -322,7 +616,6 @@ class SingleProClass extends Component {
                         {isLikeLoading ? "Adding..." : "Add to Wishlist"}
                       </button>
                     </div>
-                    {/* Success Messages */}
                     {cartMessage && (
                       <div className="alert alert-success mt-3" role="alert">
                         {cartMessage}
@@ -338,19 +631,98 @@ class SingleProClass extends Component {
               </div>
             </div>
           </div>
-          <br />
-          <br />
-          <br />
+
+          {/* Review Submission Form */}
+          {isLoggedIn && (
+            <div className="mt-5">
+              <h4>
+                {userReview && !isEditingReview
+                  ? "Your Review"
+                  : "Submit a Review"}
+              </h4>
+              {reviewError && (
+                <div className="alert alert-danger" role="alert">
+                  {reviewError}
+                </div>
+              )}
+              {userReview && !isEditingReview ? (
+                <div className="border p-3 rounded">
+                  <div className="d-flex align-items-center">
+                    <div className="stars">
+                      {this.renderStars(userReview.rating)}
+                    </div>
+                    <span className="ms-2">{userReview.rating}/5</span>
+                  </div>
+                  <p className="mt-2">{userReview.review}</p>
+                  <div>
+                    <button
+                      className="btn btn-primary btn-sm me-2"
+                      onClick={this.startEditingReview}
+                    >
+                      <FaEdit /> Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => this.deleteReview(userReview._id)}
+                    >
+                      <FaTrash /> Delete
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border p-3 rounded">
+                  <div className="mb-3">
+                    <label className="form-label">Rating:</label>
+                    <div className="d-flex">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FaStar
+                          key={star}
+                          className={`star-icon me-1 ${
+                            reviewForm.rating >= star
+                              ? "text-warning"
+                              : "text-secondary"
+                          }`}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => this.handleRatingChange(star)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="reviewText" className="form-label">
+                      Review:
+                    </label>
+                    <textarea
+                      id="reviewText"
+                      name="review"
+                      className="form-control"
+                      value={reviewForm.review}
+                      onChange={this.handleReviewChange}
+                      rows="4"
+                      placeholder="Write your review here..."
+                    />
+                  </div>
+                  <button
+                    className="btn btn-primary"
+                    onClick={this.submitReview}
+                    disabled={!reviewForm.rating || !reviewForm.review}
+                  >
+                    {isEditingReview ? "Update Review" : "Submit Review"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <Rating_Review />
+        <Rating_Review productId={productId} />
       </>
     );
   }
 }
+
 const SinglePro = () => {
-  const { productId } = useParams(); 
+  const { productId } = useParams();
   return <SingleProClass productId={productId} />;
 };
 
 export default SinglePro;
-  

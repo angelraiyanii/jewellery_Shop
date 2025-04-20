@@ -49,7 +49,11 @@ router.use('/OtpModel', otpRoutes);
 
 //Order
 const orderRouttes = require('./orderRoutes');
-router.use('./OrderModel',orderRouttes);
+router.use('/OrderModel',orderRouttes);
+
+//Rating Reviews
+const reviewRouttes = require('./reviewRouter');
+router.use('/ReviewModel', reviewRouttes);
 
 router.use((req, res) => {
   res.status(404).json({ error: "Route not found." });

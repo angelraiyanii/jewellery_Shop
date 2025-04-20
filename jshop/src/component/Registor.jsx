@@ -2,7 +2,7 @@ import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import bg from "./Images/bg.png";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 
 const Registor = () => {
@@ -79,7 +79,7 @@ const Registor = () => {
 
     try {
       const response = await axios.post(
-       "http://localhost:5000/api/Login/add-Login",
+        "http://localhost:5000/api/Login/add-Login",
 
         formDataObj,
         {
@@ -90,6 +90,7 @@ const Registor = () => {
       );
       console.log("User added: ", response.data);
       alert("User added successfully!");
+      Navigate("/Login");
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);
       alert(error.response?.data?.error || "Something went wrong");

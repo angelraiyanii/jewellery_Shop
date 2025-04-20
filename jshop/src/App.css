@@ -840,3 +840,19 @@
 .offer-info {
   line-height: 1.4;
 }
+
+.review-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.review-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+  width: 300px;
+}
+.star-icon {
+  font-size: 1.2rem;
+  margin-right: 2px;
+}

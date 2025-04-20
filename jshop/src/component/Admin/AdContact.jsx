@@ -24,7 +24,7 @@ const AdContact = () => {
   const fetchInquiries = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/contact");
+      const response = await fetch("http://localhost:5000/api/ContactModel");
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
@@ -59,7 +59,7 @@ const AdContact = () => {
     try {
       setSendingReply(true);
       const response = await fetch(
-        `http://localhost:5000/api/contact/${selectedInquiry._id}`,
+        `http://localhost:5000/api/ContactModel/${selectedInquiry._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

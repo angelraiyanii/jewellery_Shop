@@ -1,52 +1,92 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
+import axios from "axios";
 import u1 from "./Images/user_photo.png";
-import u2 from "./Images/user_photo.png";
-class Rating_Review extends Component {
-  render() {
-    return (
-      <div className="container">
-        <h2>Customer Reviews</h2>
-        <div className="review-container">
-          {/* Review Card 1 */}
-          <div className="review-card">
-            <img src={u1} alt="User 1" />
-            <p>
-              "Happy reviewer is super excited being part of happy addons
-              family."
-            </p>
-            <h4>Louis Hoffman</h4>
-            <small>Happy Officer</small>
-            <div className="stars">
-              <FaStar className="star-icon" />
-              <FaStar className="star-icon" />
-              <FaStar className="star-icon" />
-              <FaStarHalfAlt className="star-icon" />
-              <FaRegStar className="star-icon" />
-            </div>
-          </div>
 
-          {/* Review Card 2 */}
-          <div className="review-card">
-            <img src={u2} alt="User 2" />
-            <p>
-              "Happy reviewer is super excited being part of happy addons
-              family."
-            </p>
-            <h4>Thoma Middleditch</h4>
-            <small>Happy Officer</small>
-            <div className="stars">
-              <FaStar className="star-icon" />
-              <FaStar className="star-icon" />
-              <FaStar className="star-icon" />
-              <FaStar className="star-icon" />
-              <FaStarHalfAlt className="star-icon" />
-            </div>
-          </div>
+const Rating_Review = ({ productId }) => {
+  const [reviews, setReviews] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/ReviewModel/product/${productId}`
+        );
+        console.log("Reviews fetched for productId:", productId, response.data); // Debug
+        setReviews(response.data);
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setError(error.response?.data?.error || "Failed to load reviews");
+      }
+    };
+    fetchReviews();
+  }, [productId]);
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating - fullStars >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <FaStar key={`star-${i}`} className="star-icon text-warning" />
+      );
+    }
+    if (hasHalfStar) {
+      stars.push(
+        <FaStarHalfAlt key="half-star" className="star-icon text-warning" />
+      );
+    }
+    const remainingStars = 5 - stars.length;
+    for (let i = 0; i < remainingStars; i++) {
+      stars.push(
+        <FaRegStar key={`empty-${i}`} className="star-icon text-warning" />
+      );
+    }
+    return stars;
+  };
+
+  return (
+    <div className="container my-5">
+      <h2>Customer Reviews</h2>
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
         </div>
-      </div>
-    );
-  }
-}
+      )}
+      {reviews.length === 0 && !error ? (
+        <p>No reviews yet for this product.</p>
+      ) : (
+        <div
+          className="review-container"
+          style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}
+        >
+          {reviews.map((review) => (
+            <div
+              key={review._id}
+              className="review-card border p-3 rounded"
+              style={{ width: "300px" }}
+            >
+              <img
+                src={u1}
+                alt="User"
+                className="rounded-circle mb-2"
+                style={{ width: "50px", height: "50px" }}
+              />
+              <p>"{review.review}"</p>
+              <h4>{review.userId.fullname}</h4>
+              <small>
+                Posted on {new Date(review.date).toLocaleDateString()}
+              </small>
+              <div className="stars">{renderStars(review.rating)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default Rating_Review;
