@@ -15,6 +15,7 @@ export class Product extends Component {
       liked: [],
       isLoading: false,
       isLikeLoading: false,
+      showAll: false, // New state to control how many products to show
     };
   }
 
@@ -53,9 +54,9 @@ export class Product extends Component {
         const userId = user.id;
 
         try {
-        const wishlistResponse = await axios.get(
+          const wishlistResponse = await axios.get(
             `http://localhost:5000/api/WishlistModel/${userId}`
-        );
+          );
           const wishlistProductIds = wishlistResponse.data.map(
             (item) => item.productId._id
           );
@@ -101,7 +102,7 @@ export class Product extends Component {
       });
     }
   };
-  // Add to cart functionality
+
   addToCart = async (productId) => {
     this.setState({ isLoading: true });
 
@@ -147,7 +148,6 @@ export class Product extends Component {
     }
   };
 
-  // Add to Wishlist
   toggleLike = async (index, productId) => {
     const userData =
       localStorage.getItem("user") || localStorage.getItem("admin");
@@ -193,56 +193,72 @@ export class Product extends Component {
 
   render() {
     const { products, liked, isLoading, isLikeLoading } = this.state;
+    // Show only 8 products (2 rows of 4) initially
+    const displayedProducts = this.state.showAll
+      ? products
+      : products.slice(0, 8);
+
     return (
       <div className="container mt-3" style={{ paddingBottom: "60px" }}>
         <h2 className="text-center" style={{ paddingBottom: "20px" }}>
           Available Products
         </h2>
 
-        {products.length === 0 ? (
+        {displayedProducts.length === 0 ? (
           <div className="text-center">
             <p>No active products available at the moment.</p>
           </div>
         ) : (
-          <div className="row row-cols-1 row-cols-md-4 g-4">
-            {products.map((product, index) => (
-              <div className="col" key={product._id}>
-                <div className="card product-card text-center h-100">
-                  <img
-                    src={
-                      product.productImage
-                        ? `http://localhost:5000/public/images/product_images/${product.productImage}`
-                        : pro1
-                    }
-                    alt={product.productName}
-                    className="product-image"
-                    onError={(e) => (e.target.src = pro1)}
-                  />
-                  <div className="overlay">
-                    <FaHeart
-                      className={`like-icon ${liked[index] ? "liked" : ""}`}
-                      onClick={() =>
-                        !isLikeLoading && this.toggleLike(index, product._id)
+          <>
+            <div className="row row-cols-1 row-cols-md-4 g-4">
+              {displayedProducts.map((product, index) => (
+                <div className="col" key={product._id}>
+                  <div className="card product-card text-center h-100">
+                    <img
+                      src={
+                        product.productImage
+                          ? `http://localhost:5000/public/images/product_images/${product.productImage}`
+                          : pro1
                       }
-                      style={{ cursor: isLikeLoading ? "wait" : "pointer" }}
+                      alt={product.productName}
+                      className="product-image"
+                      onError={(e) => (e.target.src = pro1)}
                     />
-                    <Link to={`/SinglePro/${product._id}`}>
-                      <FaInfoCircle className="info-icon" />
-                    </Link>
-                    <h4>{product.productName}</h4>
-                    <p>${product.price}</p>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => this.addToCart(product._id)}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Adding..." : "Add to Cart"}
-                    </button>
+                    <div className="overlay">
+                      <FaHeart
+                        className={`like-icon ${liked[index] ? "liked" : ""}`}
+                        onClick={() =>
+                          !isLikeLoading && this.toggleLike(index, product._id)
+                        }
+                        style={{ cursor: isLikeLoading ? "wait" : "pointer" }}
+                      />
+                      <Link to={`/SinglePro/${product._id}`}>
+                        <FaInfoCircle className="info-icon" />
+                      </Link>
+                      <h4>{product.productName}</h4>
+                      <p>${product.price}</p>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => this.addToCart(product._id)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Adding..." : "Add to Cart"}
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Show "View More" button if there are more products to show */}
+            {!this.state.showAll && products.length > 8 && (
+              <div className="text-center mt-4">
+                <Link to="/Ct_Product" className="btn btn-outline-primary">
+                  View More Products
+                </Link>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     );

@@ -9,6 +9,8 @@ const AdReviews = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reviewsPerPage] = useState(10); // You can adjust this number
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,6 +60,7 @@ const AdReviews = () => {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const deleteReview = async (reviewId) => {
@@ -68,12 +71,6 @@ const AdReviews = () => {
       localStorage.getItem("usertoken") ||
       localStorage.getItem("admintoken") ||
       (userData ? JSON.parse(userData).token : null);
-
-    if (!token) {
-      setError("No authentication token found. Please log in again.");
-      setTimeout(() => navigate("/login"), 2000);
-      return;
-    }
 
     try {
       await axios.delete(
@@ -107,6 +104,24 @@ const AdReviews = () => {
     );
   });
 
+  // Pagination logic
+  const indexOfLastReview = currentPage * reviewsPerPage;
+  const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+  const currentReviews = filteredReviews.slice(
+    indexOfFirstReview,
+    indexOfLastReview
+  );
+  const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">User Reviews</h2>
@@ -130,7 +145,6 @@ const AdReviews = () => {
                 value={searchTerm}
                 onChange={handleSearch}
               />
-            
             </div>
           </div>
           <div className="table-responsive">
@@ -147,9 +161,9 @@ const AdReviews = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredReviews.map((review, index) => (
+                {currentReviews.map((review, index) => (
                   <tr key={review._id}>
-                    <td>{index + 1}</td>
+                    <td>{indexOfFirstReview + index + 1}</td>
                     <td>{review.userId?.fullname || "Unknown User"}</td>
                     <td>
                       {review.productId?.productName || "Unknown Product"}
@@ -181,6 +195,62 @@ const AdReviews = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination start*/}
+          {filteredReviews.length > 0 && (
+            <div className="row mt-3">
+              <div className="col-md-12 d-flex justify-content-center">
+                <nav>
+                  <ul className="pagination">
+                    <li
+                      className={`page-item ${
+                        currentPage === 1 ? "disabled" : ""
+                      }`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        &laquo; Prev
+                      </button>
+                    </li>
+
+                    {pageNumbers.map((number) => (
+                      <li
+                        key={number}
+                        className={`page-item ${
+                          currentPage === number ? "active" : ""
+                        }`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(number)}
+                        >
+                          {number}
+                        </button>
+                      </li>
+                    ))}
+
+                    <li
+                      className={`page-item ${
+                        currentPage === totalPages ? "disabled" : ""
+                      }`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next &raquo;
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+          )}
+          {/* Pagination end*/}
         </>
       )}
     </div>

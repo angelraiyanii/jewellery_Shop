@@ -213,5 +213,17 @@ router.get('/user-details/:userId', async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to fetch user details' });
   }
 });
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const user = await UserSchema.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch user details' });
+  }
+});
 
 module.exports = router;

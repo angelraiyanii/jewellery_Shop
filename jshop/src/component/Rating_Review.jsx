@@ -6,6 +6,8 @@ import u1 from "./Images/user_photo.png";
 const Rating_Review = ({ productId }) => {
   const [reviews, setReviews] = useState([]);
   const [error, setError] = useState(null);
+  const [userImages, setUserImages] = useState({});
+  const [loadingImages, setLoadingImages] = useState(false);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -13,14 +15,53 @@ const Rating_Review = ({ productId }) => {
         const response = await axios.get(
           `http://localhost:5000/api/ReviewModel/product/${productId}`
         );
-        console.log("Reviews fetched for productId:", productId, response.data); // Debug
         setReviews(response.data);
         setError(null);
+
+        // Fetch user images only if there are reviews
+        if (response.data.length > 0) {
+          await fetchUserImages(response.data);
+        }
       } catch (error) {
         console.error("Error fetching reviews:", error);
         setError(error.response?.data?.error || "Failed to load reviews");
       }
     };
+
+    const fetchUserImages = async (reviewsData) => {
+      setLoadingImages(true);
+      try {
+        const images = {};
+
+        await Promise.all(
+          reviewsData.map(async (review) => {
+            try {
+              const userResponse = await axios.get(
+                `http://localhost:5000/api/Login/user/${review.userId._id}`
+              );
+              if (userResponse.data?.profilePic) {
+                images[
+                  review.userId._id
+                ] = `http://localhost:5000/public/images/profile_pictures/${userResponse.data.profilePic}`;
+              }
+            } catch (userError) {
+              console.error(
+                `Error fetching user ${review.userId._id}:`,
+                userError
+              );
+              images[review.userId._id] = u1;
+            }
+          })
+        );
+
+        setUserImages(images);
+      } catch (error) {
+        console.error("Error in user images fetch:", error);
+      } finally {
+        setLoadingImages(false);
+      }
+    };
+
     fetchReviews();
   }, [productId]);
 
@@ -56,6 +97,7 @@ const Rating_Review = ({ productId }) => {
           {error}
         </div>
       )}
+      {loadingImages && <p>Loading user images...</p>}
       {reviews.length === 0 && !error ? (
         <p>No reviews yet for this product.</p>
       ) : (
@@ -70,10 +112,13 @@ const Rating_Review = ({ productId }) => {
               style={{ width: "300px" }}
             >
               <img
-                src={u1}
+                src={userImages[review.userId._id] || u1}
                 alt="User"
                 className="rounded-circle mb-2"
-                style={{ width: "50px", height: "50px" }}
+                style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                onError={(e) => {
+                  e.target.src = u1;
+                }}
               />
               <p>"{review.review}"</p>
               <h4>{review.userId.fullname}</h4>

@@ -143,7 +143,6 @@ export class AddCategory extends Component {
         } else {
           alert(data.error);
         }
-        
       } catch (error) {
         console.error("Fetch Error:", error);
         alert(`Error ${isUpdate ? "updating" : "adding"} category`);
@@ -307,7 +306,7 @@ export class AddCategory extends Component {
     return (
       <center>
         <div className="container ">
-          <h2 className="text-center mb-4">Category</h2>
+          <h2 className="text-center mb-4">Category View</h2>
           <div className="d-flex justify-content-between mb-3">
             <div className="position-relative">
               <input
@@ -528,7 +527,6 @@ export class AddCategory extends Component {
                           <button
                             type="submit"
                             className="btn btn-primary btn-lg"
-                            
                           >
                             Update Category
                           </button>
@@ -670,7 +668,7 @@ export class AddCategory extends Component {
             </div>
           </div>
         )}
-             {/* Pagination end*/}
+        {/* Pagination end*/}
       </center>
     );
   }

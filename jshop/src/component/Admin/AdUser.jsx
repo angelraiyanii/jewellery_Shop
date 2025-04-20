@@ -14,7 +14,7 @@ export class AdUser extends Component {
       successMessage: null,
       showUserForm: false,
       showUpdateFormUser: false,
-      searchQuery: "", // Added search query state
+      searchQuery: "",
       formData: {
         fullname: "",
         email: "",
@@ -533,20 +533,7 @@ export class AdUser extends Component {
                               <div className="d-flex justify-content-center">
                                 <div className="container mt-4">
                                   <div className="row shadow p-4 rounded">
-                                    {/* Add hide button in the top right */}
-                                    <div className="position-relative w-100">
-                                      <button
-                                        className="btn btn-sm btn-outline-secondary position-absolute end-0 top-0"
-                                        onClick={() => setShowUserView(false)}
-                                        style={{
-                                          marginTop: "-10px",
-                                          marginRight: "10px",
-                                        }}
-                                      >
-                                        <i className="fas fa-times"></i> Hide
-                                        Details
-                                      </button>
-                                    </div>
+                                 
 
                                     <div className="col-md-4 text-center">
                                       <img
