@@ -34,10 +34,7 @@ router.post("/add", upload.single("banner"), async (req, res) => {
       ...req.body,
       discount: req.body.rate,
       validity: req.body.endDate
-    };
-    
-    // Add banner filename if a file was uploaded
-    if (req.file) {
+    };  if (req.file) {
       offerData.banner = req.file.filename;
     }
     
@@ -49,7 +46,6 @@ router.post("/add", upload.single("banner"), async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
 // Get All Offers
 router.get("/", async (req, res) => {
   try {
@@ -90,17 +86,15 @@ router.post("/verify", async (req, res) => {
       });
     }
     
-    // Find all active offers
-    const offers = await Offer.find({ status: "Active" });
     const currentDate = new Date();
     
-    // Find matching offer by normalized code (no spaces, uppercase)
-    const matchingOffer = offers.find(
-      (offer) => 
-        offer.title.replace(/\s+/g, '').toUpperCase() === offerCode.toUpperCase() &&
-        new Date(offer.startDate) <= currentDate &&
-        new Date(offer.endDate) >= currentDate
-    );
+    // Find matching offer by offer code (case-insensitive)
+    const matchingOffer = await Offer.findOne({
+      offerCode: offerCode.toUpperCase(),
+      status: "Active",
+      startDate: { $lte: currentDate },
+      endDate: { $gte: currentDate }
+    });
 
     if (!matchingOffer) {
       return res.status(404).json({ 
@@ -125,6 +119,7 @@ router.post("/verify", async (req, res) => {
     if (discountAmount > maxDiscount) {
       discountAmount = maxDiscount;
     }
+    
     res.json({
       success: true,
       offer: matchingOffer,

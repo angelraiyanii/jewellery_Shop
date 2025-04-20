@@ -6,10 +6,11 @@ const AdOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState("add"); // add, edit, view
+  const [formType, setFormType] = useState("add");
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
+    offerCode: "",
     description: "",
     rate: "",
     maxdiscount: "",
@@ -25,6 +26,15 @@ const AdOffers = () => {
   useEffect(() => {
     fetchOffers();
   }, []);
+
+  const generateOfferCode = () => {
+    const prefixes = ["SAVE", "OFFER", "DEAL", "DISC", "WOW", "FLAT"];
+    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randomNumber = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    return `${randomPrefix}${randomNumber}`;
+  };
 
   const fetchOffers = async () => {
     try {
@@ -45,6 +55,7 @@ const AdOffers = () => {
     if (type === "add") {
       setFormData({
         title: "",
+        offerCode: generateOfferCode(),
         description: "",
         rate: "",
         maxdiscount: "",
@@ -56,10 +67,11 @@ const AdOffers = () => {
       });
       setPreviewImage("");
     } else {
-      // For edit and view
       setSelectedOffer(offer);
       setFormData({
         title: offer.title,
+        offerCode:
+          offer.offerCode || offer.title.replace(/\s+/g, "").toUpperCase(),
         description: offer.description,
         rate: offer.rate,
         maxdiscount: offer.maxdiscount,
@@ -68,7 +80,6 @@ const AdOffers = () => {
         endDate: new Date(offer.endDate).toISOString().split("T")[0],
         status: offer.status,
       });
-
       if (offer.banner) {
         setPreviewImage(
           `http://localhost:5000/public/images/banner_images/${offer.banner}`
@@ -240,18 +251,34 @@ const AdOffers = () => {
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Offer Code</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={
-                      formData.title
-                        ? formData.title.replace(/\s+/g, "").toUpperCase()
-                        : ""
-                    }
-                    readOnly
-                  />
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="offerCode"
+                      value={formData.offerCode}
+                      onChange={handleChange}
+                      readOnly={formType === "view"}
+                      pattern="[A-Za-z0-9]+"
+                      maxLength={10}
+                    />
+                    {formType === "add" && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            offerCode: generateOfferCode(),
+                          })
+                        }
+                      >
+                        Generate
+                      </button>
+                    )}
+                  </div>
                   <small className="text-muted">
-                    Auto-generated from title
+                    Generated Automatically..😉💡
                   </small>
                 </div>
               </div>
