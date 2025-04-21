@@ -1,0 +1,390 @@
+[{
+  "_id": {
+    "$oid": "67f24b6c90f93ed8440b6ce8"
+  },
+  "productName": "Earring",
+  "categoryName": "Earring",
+  "price": 434,
+  "discount": 12,
+  "goldWeight": 3,
+  "diamondWeight": 1.32,
+  "grossWeight": 1.32,
+  "goldPrice": 12345,
+  "diamondPrice": 55454,
+  "makingCharges": 2455,
+  "overheadCharges": 454,
+  "basePrice": 5656,
+  "tax": 23.23,
+  "totalPrice": 888786,
+  "productType": "sliver ",
+  "productPurity": "43",
+  "diamondColor": "yellow",
+  "diamondPieces": 443,
+  "stock": 34,
+  "quantity": 2,
+  "productImage": "1743932268214.png",
+  "createdAt": {
+    "$date": "2025-04-06T09:37:48.294Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f272121b45a29269bb9682"
+  },
+  "productName": "Gold Chain",
+  "categoryName": "china",
+  "price": 89000.76,
+  "discount": 12,
+  "goldWeight": 9.8,
+  "diamondWeight": 1.1,
+  "grossWeight": 1.44,
+  "goldPrice": 98000,
+  "diamondPrice": 89.9,
+  "makingCharges": 45,
+  "overheadCharges": 987,
+  "basePrice": 99898,
+  "tax": 12.6,
+  "totalPrice": 99998,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "Green",
+  "diamondPieces": 898,
+  "stock": 23,
+  "quantity": 2,
+  "productImage": "1743942162550.png",
+  "createdAt": {
+    "$date": "2025-04-06T12:22:42.584Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f2b3bda9ce06d839bc864e"
+  },
+  "productName": "Bracelet",
+  "categoryName": "Bracelet",
+  "price": 89999,
+  "discount": 12,
+  "goldWeight": 9.8,
+  "diamondWeight": 1.1,
+  "grossWeight": 45,
+  "goldPrice": 12345,
+  "diamondPrice": 89.9,
+  "makingCharges": 2455,
+  "overheadCharges": 56,
+  "basePrice": 99898,
+  "tax": 0.56,
+  "totalPrice": 78000,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "pink",
+  "diamondPieces": 567,
+  "stock": 34,
+  "quantity": 2,
+  "productImage": "1743958973544.png",
+  "createdAt": {
+    "$date": "2025-04-06T17:02:53.573Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f5ebc92ea5ce1e4a8fc241"
+  },
+  "productName": "Ring",
+  "categoryName": "Rings",
+  "price": 47000,
+  "discount": 32,
+  "goldWeight": 8.8,
+  "diamondWeight": 12,
+  "grossWeight": 10.3,
+  "goldPrice": 23000,
+  "diamondPrice": 89.9,
+  "makingCharges": 3000,
+  "overheadCharges": 300,
+  "basePrice": 200,
+  "tax": 12.7,
+  "totalPrice": 78000,
+  "productType": "Sliver ",
+  "productPurity": "12",
+  "diamondColor": "Green",
+  "diamondPieces": 321.21,
+  "stock": 12,
+  "quantity": 3,
+  "productImage": "1744169929874.png",
+  "createdAt": {
+    "$date": "2025-04-09T03:38:49.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f9483293743acab0e4e0da"
+  },
+  "productName": "Ring",
+  "categoryName": "Rings",
+  "price": 45000,
+  "discount": 3.5,
+  "goldWeight": 43.5,
+  "diamondWeight": 1.32,
+  "grossWeight": 1.32,
+  "goldPrice": 23500,
+  "diamondPrice": 55454,
+  "makingCharges": 3500,
+  "overheadCharges": 985,
+  "basePrice": 34000,
+  "tax": 12.7,
+  "totalPrice": 97000,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "pink",
+  "diamondPieces": 898,
+  "stock": 23,
+  "quantity": 7,
+  "productImage": "1744689471215.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:49:54.704Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f9486d93743acab0e4e0dc"
+  },
+  "productName": "Ring",
+  "categoryName": "Rings",
+  "price": 79000,
+  "discount": 3.5,
+  "goldWeight": 8.8,
+  "diamondWeight": 34.5,
+  "grossWeight": 1.32,
+  "goldPrice": 98000,
+  "diamondPrice": 45,
+  "makingCharges": 3000,
+  "overheadCharges": 56,
+  "basePrice": 34000,
+  "tax": 0.56,
+  "totalPrice": 98000,
+  "productType": "Sliver ",
+  "productPurity": "43",
+  "diamondColor": "Green",
+  "diamondPieces": 898,
+  "stock": 34,
+  "quantity": 2,
+  "productImage": "1744689490125.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:50:53.112Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f948b693743acab0e4e0de"
+  },
+  "productName": "Bracelet",
+  "categoryName": "Bracelet",
+  "price": 43400,
+  "discount": 9.8,
+  "goldWeight": 9.8,
+  "diamondWeight": 1.32,
+  "grossWeight": 1.44,
+  "goldPrice": 98000,
+  "diamondPrice": 89.9,
+  "makingCharges": 3500,
+  "overheadCharges": 300,
+  "basePrice": 99898,
+  "tax": 12.6,
+  "totalPrice": 78000,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "pink",
+  "diamondPieces": 898,
+  "stock": 12,
+  "quantity": 3,
+  "productImage": "1744689505275.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:52:06.689Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f948f793743acab0e4e0e0"
+  },
+  "productName": "Bracelet",
+  "categoryName": "Bracelet",
+  "price": 79000,
+  "discount": 3.5,
+  "goldWeight": 9.8,
+  "diamondWeight": 1.1,
+  "grossWeight": 10.3,
+  "goldPrice": 98000,
+  "diamondPrice": 89.9,
+  "makingCharges": 3500,
+  "overheadCharges": 985,
+  "basePrice": 99898,
+  "tax": 12.6,
+  "totalPrice": 98000,
+  "productType": "Sliver ",
+  "productPurity": "56",
+  "diamondColor": "yellow",
+  "diamondPieces": 898,
+  "stock": 34,
+  "quantity": 2,
+  "productImage": "1744689516679.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:53:11.760Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f9494e93743acab0e4e0e2"
+  },
+  "productName": "chain",
+  "categoryName": "china",
+  "price": 89000.76,
+  "discount": 9.8,
+  "goldWeight": 9.8,
+  "diamondWeight": 1.1,
+  "grossWeight": 45,
+  "goldPrice": 12345,
+  "diamondPrice": 89.9,
+  "makingCharges": 3500,
+  "overheadCharges": 56,
+  "basePrice": 34000,
+  "tax": 0.56,
+  "totalPrice": 98000,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "yellow",
+  "diamondPieces": 321.21,
+  "stock": 12,
+  "quantity": 3,
+  "productImage": "1744689528166.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:54:38.109Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f9498c93743acab0e4e0e4"
+  },
+  "productName": "Gold Chain",
+  "categoryName": "china",
+  "price": 79000,
+  "discount": 9.3,
+  "goldWeight": 435,
+  "diamondWeight": 12,
+  "grossWeight": 1.32,
+  "goldPrice": 12345,
+  "diamondPrice": 89.9,
+  "makingCharges": 2455,
+  "overheadCharges": 56,
+  "basePrice": 200,
+  "tax": 12.7,
+  "totalPrice": 97000,
+  "productType": "Gold",
+  "productPurity": "43",
+  "diamondColor": "pink",
+  "diamondPieces": 898,
+  "stock": 12,
+  "quantity": 2,
+  "productImage": "1744689541047.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:55:40.358Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f949e793743acab0e4e0e6"
+  },
+  "productName": "Earring",
+  "categoryName": "Earring",
+  "price": 89999,
+  "discount": 9.8,
+  "goldWeight": 9.8,
+  "diamondWeight": 1.32,
+  "grossWeight": 1.32,
+  "goldPrice": 23000,
+  "diamondPrice": 89.9,
+  "makingCharges": 3000,
+  "overheadCharges": 300,
+  "basePrice": 99898,
+  "tax": 23.23,
+  "totalPrice": 98000,
+  "productType": "Gold",
+  "productPurity": "43",
+  "diamondColor": "yellow",
+  "diamondPieces": 898,
+  "stock": 349,
+  "quantity": 6,
+  "productImage": "1744689550884.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:57:11.668Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f94a2d93743acab0e4e0f8"
+  },
+  "productName": "Earring",
+  "categoryName": "Earring",
+  "price": 89000.76,
+  "discount": 9.8,
+  "goldWeight": 43.5,
+  "diamondWeight": 1.32,
+  "grossWeight": 10.3,
+  "goldPrice": 98000,
+  "diamondPrice": 89.9,
+  "makingCharges": 3000,
+  "overheadCharges": 987,
+  "basePrice": 34000,
+  "tax": 23.23,
+  "totalPrice": 98000,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "Green",
+  "diamondPieces": 898,
+  "stock": 23,
+  "quantity": 3,
+  "productImage": "1744689559651.png",
+  "createdAt": {
+    "$date": "2025-04-11T16:58:21.222Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f94ece93743acab0e4e27f"
+  },
+  "productName": "Bengals",
+  "categoryName": "Bengals ",
+  "price": 89000.76,
+  "discount": 12,
+  "goldWeight": 43.5,
+  "diamondWeight": 1.1,
+  "grossWeight": 10.3,
+  "goldPrice": 98000,
+  "diamondPrice": 89.9,
+  "makingCharges": 2455,
+  "overheadCharges": 300,
+  "basePrice": 200,
+  "tax": 56,
+  "totalPrice": 78000,
+  "productType": "Gold",
+  "productPurity": "56",
+  "diamondColor": "yellow",
+  "diamondPieces": 898,
+  "stock": 34,
+  "quantity": 3,
+  "productImage": "1744689573283.png",
+  "createdAt": {
+    "$date": "2025-04-11T17:18:06.739Z"
+  },
+  "__v": 0
+}]

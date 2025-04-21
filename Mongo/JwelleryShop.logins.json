@@ -1,0 +1,60 @@
+[{
+  "_id": {
+    "$oid": "67fdd7e481b3a740614f8057"
+  },
+  "fullname": "JINAL TARAVIYA",
+  "email": "jtaraviya932@rku.ac.in",
+  "mobile": "5545454545",
+  "password": "jinal",
+  "gender": "female",
+  "pincode": "554466",
+  "address": "Rajkot ",
+  "profilePic": "1744689124439.png",
+  "role": "admin",
+  "status": "Active",
+  "token": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:52:04.465Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd8a981b3a740614f80bd"
+  },
+  "fullname": "Angel Raiyani",
+  "email": "araiyani764@rku.ac.in",
+  "mobile": "6576543256",
+  "password": "Angel",
+  "gender": "female",
+  "pincode": "454467",
+  "address": "Rajkot",
+  "profilePic": "1745151350930.JPG",
+  "role": "user",
+  "status": "Active",
+  "token": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:55:21.831Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68035d934c35193037ad99d3"
+  },
+  "fullname": "vibhuti",
+  "email": "angelraiyanii@gmail.com",
+  "mobile": "5545454545",
+  "password": "aa",
+  "gender": "female",
+  "pincode": "676767",
+  "address": "bb",
+  "profilePic": "1745151292053.JPG",
+  "role": "user",
+  "status": "Active",
+  "token": null,
+  "createdAt": {
+    "$date": "2025-04-19T08:23:47.555Z"
+  },
+  "__v": 0
+}]

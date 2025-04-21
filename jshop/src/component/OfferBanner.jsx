@@ -112,7 +112,7 @@ const OfferBanner = () => {
             <Carousel.Item key={offer._id}>
               <div className="banner-wrapper position-relative">
                 <img
-                  className="d-block w-100"
+                className="d-block w-100 h-100"
                   src={
                     offer.banner
                       ? `http://localhost:5000/public/images/banner_images/${offer.banner}`
@@ -127,7 +127,7 @@ const OfferBanner = () => {
                     );
                     e.target.src = s1;
                   }} // Fallback if image fails to load
-                  style={{ maxHeight: "400px", objectFit: "cover" }}
+                  style={{ maxHeight: "700px", objectFit: "cover" }}
                 />
                 <div className="banner-overlay position-absolute w-100 h-100 top-0 start-0 d-flex align-items-center justify-content-end">
                   <div className="offer-content me-5 p-4 bg-dark bg-opacity-75 text-white rounded shadow">
@@ -171,10 +171,10 @@ const OfferBanner = () => {
           // Fallback carousel item if no active offers
           <Carousel.Item>
             <img
-              className="d-block w-100"
+           className="d-block w-100 h-100"
               src={s1}
               alt="Default slide"
-              style={{ maxHeight: "400px", objectFit: "cover" }}
+              style={{ maxHeight: "700px", objectFit: "cover" }}
             />
             <Carousel.Caption>
               <h3>Exclusive Jewelry Collection</h3>
@@ -183,39 +183,6 @@ const OfferBanner = () => {
           </Carousel.Item>
         )}
       </Carousel>
-
-      {/* Add custom CSS for the banner */}
-      <style jsx="true">{`
-        .offer-banner-container {
-          margin-bottom: 2rem;
-        }
-        .banner-wrapper {
-          overflow: hidden;
-        }
-        .banner-overlay {
-          background: linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 0.4) 100%
-          );
-        }
-        .offer-content {
-          max-width: 400px;
-        }
-        .offer-code-box {
-          border-style: dashed !important;
-          transition: all 0.3s ease;
-        }
-        .offer-code-box:hover {
-          background-color: rgba(255, 193, 7, 0.1);
-        }
-        @media (max-width: 768px) {
-          .offer-content {
-            max-width: 80%;
-            margin-right: 10% !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };

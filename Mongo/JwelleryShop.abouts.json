@@ -1,0 +1,15 @@
+[{
+  "_id": {
+    "$oid": "67f2b882c8507ec5b590508a"
+  },
+  "bannerImage": "1743960194563.png",
+  "content": "About Us",
+  "section1Image": "1743960194573.png",
+  "section1Text": "Discover timeless elegance with our exquisite jewellery\r\ncollection. Crafted with passion, designed for beauty. Each\r\npiece tells a story of elegance and sophistication.",
+  "section2Image": "1743960194574.png",
+  "section2Text": "Discover timeless elegance with our exquisite jewellery\r\n                collection. Crafted with passion, designed for beauty. Each\r\n                piece tells a story of elegance and sophistication.",
+  "createdAt": {
+    "$date": "2025-04-06T17:23:14.697Z"
+  },
+  "__v": 0
+}]

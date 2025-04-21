@@ -1,0 +1,60 @@
+[{
+  "_id": {
+    "$oid": "67eeb629bb0e6f1374624dcc"
+  },
+  "categoryName": "Rings",
+  "categoryImage": "1743956894170.png",
+  "categoryStatus": "Active",
+  "createdAt": {
+    "$date": "2025-04-03T16:24:09.657Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67eed7064eeea3f309643fa9"
+  },
+  "categoryName": "Bracelet",
+  "categoryImage": "1743705862772.png",
+  "categoryStatus": "Active",
+  "createdAt": {
+    "$date": "2025-04-03T18:44:22.813Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f2409097009f90349d5729"
+  },
+  "categoryName": "china",
+  "categoryImage": "1743929488357.png",
+  "categoryStatus": "Active",
+  "createdAt": {
+    "$date": "2025-04-06T08:51:28.368Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f5eaa02ea5ce1e4a8fc238"
+  },
+  "categoryName": "Earring",
+  "categoryImage": "1744169632798.png",
+  "categoryStatus": "Active",
+  "createdAt": {
+    "$date": "2025-04-09T03:33:52.812Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f94e9193743acab0e4e26c"
+  },
+  "categoryName": "Bengals ",
+  "categoryImage": "1744391825756.png",
+  "categoryStatus": "Inactive",
+  "createdAt": {
+    "$date": "2025-04-11T17:17:05.760Z"
+  },
+  "__v": 0
+}]

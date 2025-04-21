@@ -1,0 +1,64 @@
+[{
+  "_id": {
+    "$oid": "67f80555e97942717d334dd8"
+  },
+  "name": "Angel Raiyani",
+  "email": "araiyani764@rku.ac.in",
+  "phone": "1122334455",
+  "message": "Product Issue",
+  "reply": "Refunded your money 💵...",
+  "status": "Resolved",
+  "seen": false,
+  "createdAt": {
+    "$date": "2025-04-10T17:52:21.133Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f81046d270c926f056c4d3"
+  },
+  "name": "Nirali Akbari",
+  "email": "angelraiyanii@gmail.com",
+  "phone": "8347487892",
+  "message": "Product Issues ",
+  "reply": "",
+  "status": "New",
+  "seen": false,
+  "createdAt": {
+    "$date": "2025-04-10T18:39:02.771Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68035d534c35193037ad99c7"
+  },
+  "name": "Jinal Taraviya",
+  "email": "araiyani764@rku.ac.in",
+  "phone": "7766554433",
+  "message": "nnn",
+  "reply": "",
+  "status": "New",
+  "seen": false,
+  "createdAt": {
+    "$date": "2025-04-19T08:22:43.326Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6804e81329a06acbf1e563b9"
+  },
+  "name": "Nirali Raiyani",
+  "email": "nirupatel7892@gmail.com",
+  "phone": "6655443322",
+  "message": "Product Issues ",
+  "reply": "",
+  "status": "New",
+  "seen": false,
+  "createdAt": {
+    "$date": "2025-04-20T12:26:59.545Z"
+  },
+  "__v": 0
+}]

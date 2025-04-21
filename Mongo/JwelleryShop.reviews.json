@@ -1,0 +1,23 @@
+[{
+  "_id": {
+    "$oid": "6804af046cf095c829f2697e"
+  },
+  "userId": {
+    "$oid": "67fdd7e481b3a740614f8057"
+  },
+  "productId": {
+    "$oid": "67f948f793743acab0e4e0e0"
+  },
+  "rating": 3,
+  "review": "good Product",
+  "date": {
+    "$date": "2025-04-20T08:53:38.093Z"
+  },
+  "createdAt": {
+    "$date": "2025-04-20T08:23:32.146Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-20T08:53:38.130Z"
+  },
+  "__v": 0
+}]

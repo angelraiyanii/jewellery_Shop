@@ -1,0 +1,48 @@
+[{
+  "_id": {
+    "$oid": "67f2b0a7b7ebea4aa48248c5"
+  },
+  "name": "Index",
+  "image": "1743958183614.png",
+  "status": "Active",
+  "createdAt": {
+    "$date": "2025-04-06T16:49:43.633Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f2b0f8b7ebea4aa48248c7"
+  },
+  "name": "Luxury",
+  "image": "1743958264225.png",
+  "status": "Active",
+  "createdAt": {
+    "$date": "2025-04-06T16:51:04.232Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f2b11ab7ebea4aa48248c9"
+  },
+  "name": "New Collections ",
+  "image": "1743958298343.png",
+  "status": "Active",
+  "createdAt": {
+    "$date": "2025-04-06T16:51:38.366Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f2b12bb7ebea4aa48248cb"
+  },
+  "name": "demo",
+  "image": "1743958315490.png",
+  "status": "Inactive",
+  "createdAt": {
+    "$date": "2025-04-06T16:51:55.504Z"
+  },
+  "__v": 0
+}]
