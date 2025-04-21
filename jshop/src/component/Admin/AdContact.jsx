@@ -89,7 +89,6 @@ const AdContact = () => {
     }
   };
 
-  // Search functionality
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -111,7 +110,7 @@ const AdContact = () => {
     if (window.confirm("Are you sure you want to delete this inquiry?")) {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/contact/${id}`,
+          `http://localhost:5000/api/ContactModel/${id}`,
           {
             method: "DELETE",
           }
@@ -135,7 +134,6 @@ const AdContact = () => {
     return <div className="p-4 text-center">Loading inquiries...</div>;
   if (error) return <div className="p-4 text-center text-danger">{error}</div>;
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredInquiries.slice(
@@ -143,8 +141,6 @@ const AdContact = () => {
     indexOfLastItem
   );
   const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
-
-  // Generate page numbers
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
@@ -154,21 +150,112 @@ const AdContact = () => {
     <div className="container mt-4">
       <h2 className="text-center mb-4">Contact Inquiries</h2>
 
-      {/* Search Component */}
+      {/* Search */}
       <div className="d-flex justify-content-end mb-3">
         <div className="input-group" style={{ maxWidth: "300px" }}>
           <input
             type="text"
             className="form-control"
-            placeholder="🔎Search inquiries..."
+            placeholder="🔎 Search inquiries..."
             value={searchTerm}
             onChange={handleSearchChange}
           />
         </div>
       </div>
 
+      {/* Inquiry Details Form (Modal-style above table) */}
+      {showModal && selectedInquiry && (
+        <div className="card shadow-lg mb-4 border-primary">
+          <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">Inquiry Details</h5>
+            <button
+              className="btn btn-sm btn-light"
+              onClick={() => setShowModal(false)}
+            >
+              ✖
+            </button>
+          </div>
+          <div className="card-body">
+            <p>
+              <strong>Name:</strong> {selectedInquiry.name || "N/A"}
+            </p>
+            <p>
+              <strong>Email:</strong> {selectedInquiry.email || "N/A"}
+            </p>
+            <p>
+              <strong>Phone:</strong> {selectedInquiry.phone || "N/A"}
+            </p>
+            <p>
+              <strong>Message:</strong> {selectedInquiry.message || "N/A"}
+            </p>
+            <p>
+              <strong>Date:</strong>{" "}
+              {selectedInquiry.createdAt
+                ? new Date(selectedInquiry.createdAt).toLocaleString()
+                : "N/A"}
+            </p>
+            <p>
+              <strong>Status:</strong>{" "}
+              <span
+                className={`badge ${
+                  selectedInquiry.status === "New"
+                    ? "bg-primary"
+                    : selectedInquiry.status === "In Progress"
+                    ? "bg-warning text-dark"
+                    : "bg-success"
+                }`}
+              >
+                {selectedInquiry.status || "New"}
+              </span>
+            </p>
+
+            <div className="mb-3">
+              <label className="form-label">Your Reply</label>
+              <textarea
+                className="form-control"
+                rows="4"
+                value={reply}
+                onChange={handleReplyChange}
+                placeholder="Type your reply here..."
+              ></textarea>
+              <small className="form-text text-danger">
+                This reply will be sent to the user's email.
+              </small>
+            </div>
+
+            <div className="d-flex justify-content-end">
+              <button
+                className="btn btn-secondary me-2"
+                onClick={() => setShowModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={sendReply}
+                disabled={!reply.trim() || sendingReply}
+              >
+                {sendingReply ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reply"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
       <table className="table table-bordered">
-        <thead>
+        <thead className="table-light">
           <tr>
             <th>ID</th>
             <th>Name</th>
@@ -194,7 +281,7 @@ const AdContact = () => {
                 </td>
                 <td>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-semibold ${
+                    className={`px-2 py-1 rounded text-xs fw-bold ${
                       inquiry.status === "New"
                         ? "bg-primary text-white"
                         : inquiry.status === "In Progress"
@@ -282,80 +369,6 @@ const AdContact = () => {
                 </li>
               </ul>
             </nav>
-          </div>
-        </div>
-      )}
-
-      {/* Modal */}
-      {showModal && selectedInquiry && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 d-flex align-items-center justify-content-center p-4">
-          <div
-            className="modal-overlay bg-white p-4 rounded"
-            style={{ maxWidth: "600px", width: "100%" }}
-          >
-            <h4>Inquiry Details</h4>
-            <div className="mb-3">
-              <strong>Name:</strong> {selectedInquiry.name || "N/A"}
-            </div>
-            <div className="mb-3">
-              <strong>Email:</strong> {selectedInquiry.email || "N/A"}
-            </div>
-            <div className="mb-3">
-              <strong>Phone:</strong> {selectedInquiry.phone || "N/A"}
-            </div>
-            <div className="mb-3">
-              <strong>Message:</strong> {selectedInquiry.message || "N/A"}
-            </div>
-            <div className="mb-3">
-              <strong>Date:</strong>{" "}
-              {selectedInquiry.createdAt
-                ? new Date(selectedInquiry.createdAt).toLocaleString()
-                : "N/A"}
-            </div>
-            <div className="mb-3">
-              <strong>Status:</strong>{" "}
-              <span
-                className={`px-2 py-1 rounded text-xs font-semibold ${
-                  selectedInquiry.status === "New"
-                    ? "bg-primary text-white"
-                    : selectedInquiry.status === "In Progress"
-                    ? "bg-warning text-dark"
-                    : "bg-success text-white"
-                }`}
-              >
-                {selectedInquiry.status || "New"}
-              </span>
-            </div>
-
-            <div className="mb-3">
-              <label>Your Reply:</label>
-              <textarea
-                className="form-control"
-                rows="3"
-                value={reply}
-                onChange={handleReplyChange}
-                placeholder="Type your reply here..."
-              ></textarea>
-              <small className="text-danger mt-1 d-block">
-                This reply will be sent to the user's Email.
-              </small>
-            </div>
-
-            <div className="d-flex justify-content-end">
-              <button
-                className="btn btn-secondary me-2"
-                onClick={() => setShowModal(false)}
-              >
-                Close
-              </button>
-              <button
-                className="btn btn-success"
-                onClick={sendReply}
-                disabled={!reply.trim() || sendingReply}
-              >
-                {sendingReply ? "Sending..." : "Send Reply"}
-              </button>
-            </div>
           </div>
         </div>
       )}
