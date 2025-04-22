@@ -10,26 +10,23 @@ const AdReviews = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [reviewsPerPage] = useState(10); // You can adjust this number
+  const [reviewsPerPage] = useState(4); // You can adjust this number
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if admin is logged in
+    const adminData = localStorage.getItem("admin");
+    const token = localStorage.getItem("admintoken");
+
+    if (!adminData || !token) {
+      setError("Please login as an admin to view this page");
+      navigate("/login");
+      setLoading(false);
+      return;
+    }
+
     const fetchReviews = async () => {
       setLoading(true);
-      const userData =
-        localStorage.getItem("admin") || localStorage.getItem("user");
-      const token =
-        localStorage.getItem("authToken") ||
-        localStorage.getItem("usertoken") ||
-        localStorage.getItem("admintoken") ||
-        (userData ? JSON.parse(userData).token : null);
-
-      if (!token) {
-        setError("No authentication token found. Please log in again.");
-        setTimeout(() => navigate("/login"), 2000);
-        setLoading(false);
-        return;
-      }
 
       try {
         const response = await axios.get(
@@ -55,6 +52,7 @@ const AdReviews = () => {
         setLoading(false);
       }
     };
+
     fetchReviews();
   }, [navigate]);
 
@@ -64,13 +62,7 @@ const AdReviews = () => {
   };
 
   const deleteReview = async (reviewId) => {
-    const userData =
-      localStorage.getItem("admin") || localStorage.getItem("user");
-    const token =
-      localStorage.getItem("authToken") ||
-      localStorage.getItem("usertoken") ||
-      localStorage.getItem("admintoken") ||
-      (userData ? JSON.parse(userData).token : null);
+    const token = localStorage.getItem("admintoken");
 
     try {
       await axios.delete(
@@ -196,7 +188,7 @@ const AdReviews = () => {
             </table>
           </div>
 
-          {/* Pagination start*/}
+          {/* Pagination start */}
           {filteredReviews.length > 0 && (
             <div className="row mt-3">
               <div className="col-md-12 d-flex justify-content-center">
@@ -212,7 +204,7 @@ const AdReviews = () => {
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
                       >
-                        &laquo; Prev
+                        « Prev
                       </button>
                     </li>
 
@@ -242,7 +234,7 @@ const AdReviews = () => {
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
                       >
-                        Next &raquo;
+                        Next »
                       </button>
                     </li>
                   </ul>
@@ -250,7 +242,7 @@ const AdReviews = () => {
               </div>
             </div>
           )}
-          {/* Pagination end*/}
+          {/* Pagination end */}
         </>
       )}
     </div>

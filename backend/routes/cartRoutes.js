@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose"); // Add this import
+const mongoose = require("mongoose");
 const Cart = require("../models/CartModel");
 
 // Add product to cart
@@ -23,7 +23,7 @@ router.post("/add", async (req, res) => {
       cartItem.quantity += 1;
       await cartItem.save();
     } else {
-      cartItem = new Cart({ userId, productId, quantity: 1 }); // Explicitly set quantity
+      cartItem = new Cart({ userId, productId, quantity: 1 });
       await cartItem.save();
     }
     
@@ -72,13 +72,30 @@ router.put("/update/:cartItemId", async (req, res) => {
     res.status(500).json({ error: "Failed to update cart" });
   }
 });
-// Clear user's cart
-router.delete("/clear/:userId", async (req, res) => {
+// Clear cart for a user
+router.delete('/clear/:userId', async (req, res) => {
   try {
-    await Cart.deleteMany({ userId: req.params.userId });
-    res.status(200).json({ message: "Cart cleared successfully" });
+    const { userId } = req.params;
+    await Cart.deleteMany({ userId });
+    res.status(200).json({
+      success: true,
+      message: 'Cart cleared successfully',
+    });
   } catch (error) {
-    res.status(500).json({ error: "Failed to clear cart" });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear cart',
+      error: error.message,
+    });
   }
 });
+// // Clear user's cart
+// router.delete("/clear/:userId", async (req, res) => {
+//   try {
+//     await Cart.deleteMany({ userId: req.params.userId });
+//     res.status(200).json({ message: "Cart cleared successfully" });
+//   } catch (error) {
+//     res.status(500).json({ error: "Failed to clear cart" });
+//   }
+// });
 module.exports = router;

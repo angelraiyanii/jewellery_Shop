@@ -1,99 +1,71 @@
-// routes/orders.js
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/OrderModel');
-const CartModel = require('../models/CartModel'); 
-const { v4: uuidv4 } = require('uuid'); // For generating unique order IDs
+const User = require('../models/Login');
+const Product = require('../models/ProductModel'); 
+const mongoose = require('mongoose');
 
 // Create a new order
 router.post('/create', async (req, res) => {
   try {
-    const {
-      userId,
-      email,
-      phone,
-      address,
-      zip,
-      city,
-      state,
-      totalAmount,
-      discount,
-      offerName
-    } = req.body;
+    const { userId, items, shippingAddress, subtotal, discount, total, offerName } = req.body;
 
-    // Generate unique order ID
-    const orderId = uuidv4();
-    const subOrderId = `SUB-${orderId.substring(0, 8)}`;
-
-    // Fetch user's cart items to create order items
-    const cartItems = await CartModel.find({ userId }).populate('productId');
-    
-    if (!cartItems || cartItems.length === 0) {
-      return res.status(400).json({ success: false, message: 'Cart is empty' });
-    }
-
-    // Get the last order ID to generate a new one
-    const lastOrder = await Order.findOne().sort({ O_Id: -1 });
-    const newOrderId = lastOrder ? lastOrder.O_Id + 1 : 1;
-
-    // Create orders for each cart item
-    const orders = [];
-    for (const item of cartItems) {
-      const order = new Order({
-        O_Id: newOrderId + orders.length,
-        O_U_Email: email,
-        O_Order_Id: orderId,
-        O_Sub_Order_Id: subOrderId,
-        O_P_Id: item.productId._id,
-        O_Total_Amount: totalAmount,
-        O_Quantity: item.quantity,
-        O_Add: address,
-        O_Phn: phone,
-        O_City: city || '',
-        O_Zip: zip,
-        O_State: state || '',
-        O_Offer_Name: offerName || '',
-        O_Payment_Mode: 'Cash on Delivery' // Default payment mode
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID format',
       });
-      
-      orders.push(order);
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
     }
 
-    // Save all orders
-    const savedOrders = await Order.insertMany(orders);
+    // Validate productIds in items
+    for (const item of items) {
+      if (!mongoose.Types.ObjectId.isValid(item.productId)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid product ID format: ${item.productId}`,
+        });
+      }
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Product not found for ID: ${item.productId}`,
+        });
+      }
+    }
 
-    // Clear the user's cart
-    await CartModel.deleteMany({ userId });
+    // Create the order
+    const order = new Order({
+      userId,
+      items,
+      shippingAddress,
+      subtotal,
+      discount,
+      total,
+      offerName,
+    });
 
-    res.status(201).json({ 
-      success: true, 
-      message: 'Order placed successfully', 
-      orderId: orderId,
-      orders: savedOrders 
+    const savedOrder = await order.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order: savedOrder,
     });
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error creating order', 
-      error: error.message 
-    });
-  }
-});
-
-// Get all orders for a user
-router.get('/user/:userId', async (req, res) => {
-  try {
-    const orders = await Order.find({ O_U_Email: req.params.userId })
-                              .sort({ createdAt: -1 });
-    
-    res.status(200).json({ success: true, orders });
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching orders', 
-      error: error.message 
+    console.error('Error creating order:', error, error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create order',
+      error: error.message,
     });
   }
 });
@@ -101,93 +73,78 @@ router.get('/user/:userId', async (req, res) => {
 // Get order by ID
 router.get('/:orderId', async (req, res) => {
   try {
-    const orders = await Order.find({ O_Order_Id: req.params.orderId });
-    
-    if (!orders || orders.length === 0) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
-    
-    res.status(200).json({ success: true, orders });
-  } catch (error) {
-    console.error('Error fetching order:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching order', 
-      error: error.message 
-    });
-  }
-});
+    const { orderId } = req.params;
+    console.log('Getting order with ID:', orderId);
 
-// Update order status
-router.put('/status/:orderId', async (req, res) => {
-  try {
-    const { status, paymentStatus } = req.body;
-    
-    const updateData = {};
-    if (status) updateData.O_Delivery_Status = status;
-    if (paymentStatus) updateData.O_Payment_Status = paymentStatus;
-    
-    const updatedOrder = await Order.updateMany(
-      { O_Order_Id: req.params.orderId },
-      { $set: updateData }
-    );
-    
-    if (updatedOrder.modifiedCount === 0) {
-      return res.status(404).json({ success: false, message: 'Order not found or no changes made' });
-    }
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Order status updated successfully'
-    });
-  } catch (error) {
-    console.error('Error updating order status:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error updating order status', 
-      error: error.message 
-    });
-  }
-});
-
-// Add review and rating to an order
-router.put('/review/:orderId', async (req, res) => {
-  try {
-    const { rating, review, productId } = req.body;
-    
-    if (!rating || !review || !productId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Rating, review and productId are required' 
+    // Validate orderId format
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      console.log('Invalid order ID format:', orderId);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID format',
       });
     }
-    
-    const updatedOrder = await Order.findOneAndUpdate(
-      { O_Order_Id: req.params.orderId, O_P_Id: productId },
-      { 
-        $set: {
-          O_Rating: rating,
-          O_Review: review
-        }
-      },
-      { new: true }
-    );
-    
-    if (!updatedOrder) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+
+    const order = await Order.findById(orderId)
+      .populate('userId', 'fullname email') // Changed 'name' to 'fullname'
+      .populate('items.productId', 'productName price productImage');
+
+    if (!order) {
+      console.log('Order not found:', orderId);
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
     }
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Review added successfully',
-      order: updatedOrder
+
+    console.log('Order found:', order._id);
+    res.status(200).json({
+      success: true,
+      order: order,
     });
   } catch (error) {
-    console.error('Error adding review:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error adding review', 
-      error: error.message 
+    console.error('Error finding order:', error, error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order',
+      error: error.message,
+    });
+  }
+});
+
+// Get all orders
+router.get('/', async (req, res) => {
+  try {
+    console.log("Fetching all orders");
+    
+    // First, try to get orders without population
+    const orders = await Order.find().sort({ createdAt: -1 });
+    console.log(`Found ${orders.length} orders`);
+    
+    // Try to populate, but with error handling
+    let populatedOrders = orders;
+    try {
+      populatedOrders = await Order.find()
+        .populate('userId', 'name email')
+        .populate('items.productId', 'productName price productImage')
+        .sort({ createdAt: -1 });
+      console.log("Population successful");
+    } catch (populateErr) {
+      console.error("Error during population:", populateErr.message);
+      // Continue with unpopulated orders
+    }
+    
+    res.status(200).json({
+      success: true,
+      count: populatedOrders.length,
+      orders: populatedOrders
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch orders',
+      error: error.message
     });
   }
 });

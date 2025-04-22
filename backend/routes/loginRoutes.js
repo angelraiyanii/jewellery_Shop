@@ -4,6 +4,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const UserSchema = require("../models/Login");
+const User = require('../models/Login');
 const router = express.Router();
 const bcrypt = require("bcrypt");
 
@@ -211,6 +212,76 @@ router.get('/user-details/:userId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch user details' });
+  }
+});
+// Add this route to get user details
+router.get('/user-details/:userId', async (req, res) => {
+  try {
+    const user = await UserSchema.findById(req.params.userId)
+      .select('-password -verificationToken') // Exclude sensitive fields
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user
+    });
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+});
+
+// Add this route for order creation
+router.post('/orders/create', async (req, res) => {
+  try {
+    const { userId, items, shippingAddress, subtotal, discount, total, offerName } = req.body;
+
+    // Validate required fields
+    if (!userId || !items || !shippingAddress || !total) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
+    // Create new order
+    const order = new Order({
+      userId,
+      items,
+      shippingAddress,
+      subtotal,
+      discount,
+      total,
+      offerName,
+      status: 'pending'
+    });
+
+    const savedOrder = await order.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      order: savedOrder
+    });
+
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create order',
+      error: error.message
+    });
   }
 });
 router.get('/user/:userId', async (req, res) => {

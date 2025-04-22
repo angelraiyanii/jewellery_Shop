@@ -43,7 +43,7 @@ function App() {
               <Slider />
               <Category />
               <Product />
-              <OfferBanner/>
+              <OfferBanner />
             </>
           }
         />
@@ -55,7 +55,7 @@ function App() {
         <Route path="/Registor" element={<Registor />} />
         <Route path="/Account" element={<Account />} />
         <Route path="/Cart" element={<Cart />} />
-        <Route path="/Checkout" element={<Checkout />} />
+        <Route path="/Checkout/:orderId" element={<Checkout />} />
         <Route path="/Wishlist" element={<Wishlist />} />
         <Route path="/OrderHistory" element={<OrderHistory />} />
         <Route path="/ForgotPassword" element={<ForgotPassword />} />

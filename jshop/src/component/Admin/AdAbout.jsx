@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import aboutBannerDefault from "../images/about.png"; // Default banner
-import img1Default from "../images/category1.png"; // Default section 1 image
-import img2Default from "../images/category2.png"; // Default section 2 image
+import { useNavigate } from "react-router-dom";
+import aboutBannerDefault from "../images/about.png";
+import img1Default from "../images/category1.png";
+import img2Default from "../images/category2.png";
 import "../../App.css";
 
 const AdAbout = () => {
+  const navigate = useNavigate();
   const [aboutData, setAboutData] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,12 +19,24 @@ const AdAbout = () => {
     section2Text: "",
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Fetch About data on mount
   useEffect(() => {
+    const adminData = localStorage.getItem("admin");
+    const token = localStorage.getItem("admintoken");
+
+    if (!adminData || !token) {
+      setError("Please login as an admin to view this page");
+      navigate("/login");
+      return;
+    }
     const fetchAboutData = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/AboutModel/about");
+        const response = await axios.get(
+          "http://localhost:5000/api/AboutModel/about"
+        );
         setAboutData(response.data);
         setFormData({
           bannerImage: null,
@@ -34,12 +48,14 @@ const AdAbout = () => {
         });
       } catch (error) {
         console.error("Error fetching about data:", error);
-        setAboutData(null); // No data yet, show defaults
+        setAboutData(null);
+      } finally {
+        setLoading(false);
       }
     };
     fetchAboutData();
-  }, []);
-
+  }, [navigate]);
+  if (loading) return <div className="text-center mt-5">Loading...</div>;
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -63,11 +79,16 @@ const AdAbout = () => {
   const validateForm = (isAdd = false) => {
     let tempErrors = {};
     if (!formData.content.trim()) tempErrors.content = "Content is required.";
-    if (isAdd && !formData.bannerImage) tempErrors.bannerImage = "Banner image is required.";
-    if (isAdd && !formData.section1Image) tempErrors.section1Image = "Section 1 image is required.";
-    if (!formData.section1Text.trim()) tempErrors.section1Text = "Section 1 text is required.";
-    if (isAdd && !formData.section2Image) tempErrors.section2Image = "Section 2 image is required.";
-    if (!formData.section2Text.trim()) tempErrors.section2Text = "Section 2 text is required.";
+    if (isAdd && !formData.bannerImage)
+      tempErrors.bannerImage = "Banner image is required.";
+    if (isAdd && !formData.section1Image)
+      tempErrors.section1Image = "Section 1 image is required.";
+    if (!formData.section1Text.trim())
+      tempErrors.section1Text = "Section 1 text is required.";
+    if (isAdd && !formData.section2Image)
+      tempErrors.section2Image = "Section 2 image is required.";
+    if (!formData.section2Text.trim())
+      tempErrors.section2Text = "Section 2 text is required.";
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
@@ -86,9 +107,13 @@ const AdAbout = () => {
     data.append("section2Text", formData.section2Text);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/AboutModel/about", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/AboutModel/about",
+        data,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       setAboutData(response.data);
       setShowAddForm(false);
       alert("About data added successfully!");
@@ -107,9 +132,12 @@ const AdAbout = () => {
     data.append("content", formData.content);
     data.append("section1Text", formData.section1Text);
     data.append("section2Text", formData.section2Text);
-    if (formData.bannerImage?.file) data.append("bannerImage", formData.bannerImage.file);
-    if (formData.section1Image?.file) data.append("section1Image", formData.section1Image.file);
-    if (formData.section2Image?.file) data.append("section2Image", formData.section2Image.file);
+    if (formData.bannerImage?.file)
+      data.append("bannerImage", formData.bannerImage.file);
+    if (formData.section1Image?.file)
+      data.append("section1Image", formData.section1Image.file);
+    if (formData.section2Image?.file)
+      data.append("section2Image", formData.section2Image.file);
 
     try {
       const response = await axios.put(
@@ -127,10 +155,16 @@ const AdAbout = () => {
 
   // Handle Delete
   const handleDelete = async () => {
-    if (!aboutData || !window.confirm("Are you sure you want to delete the About data?")) return;
+    if (
+      !aboutData ||
+      !window.confirm("Are you sure you want to delete the About data?")
+    )
+      return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/AboutModel/about/${aboutData._id}`);
+      await axios.delete(
+        `http://localhost:5000/api/AboutModel/about/${aboutData._id}`
+      );
       setAboutData(null);
       setFormData({
         bannerImage: null,
@@ -184,7 +218,9 @@ const AdAbout = () => {
             </div>
             <div className="col-md-6 text-center text-md-start">
               <h2 className="about-title">About Our Jewellery</h2>
-              <p className="about-text">{aboutData?.section1Text || "Default Section 1 Text"}</p>
+              <p className="about-text">
+                {aboutData?.section1Text || "Default Section 1 Text"}
+              </p>
             </div>
           </div>
         </div>
@@ -193,7 +229,9 @@ const AdAbout = () => {
           <div className="row align-items-center">
             <div className="col-lg-6 text-center text-lg-start">
               <h2 className="about-title">About Our Jewellery</h2>
-              <p className="about-text">{aboutData?.section2Text || "Default Section 2 Text"}</p>
+              <p className="about-text">
+                {aboutData?.section2Text || "Default Section 2 Text"}
+              </p>
             </div>
             <div className="col-lg-6 text-center">
               <img
@@ -217,7 +255,10 @@ const AdAbout = () => {
 
       {/* Add/Update Form */}
       {!aboutData && !showAddForm && (
-        <button className="btn btn-success mb-3" onClick={() => setShowAddForm(true)}>
+        <button
+          className="btn btn-success mb-3"
+          onClick={() => setShowAddForm(true)}
+        >
           Add About Data
         </button>
       )}
@@ -233,7 +274,9 @@ const AdAbout = () => {
                 className="form-control"
                 onChange={(e) => handleImageChange(e, "bannerImage")}
               />
-              {errors.bannerImage && <small className="text-danger">{errors.bannerImage}</small>}
+              {errors.bannerImage && (
+                <small className="text-danger">{errors.bannerImage}</small>
+              )}
               {formData.bannerImage && (
                 <img
                   src={formData.bannerImage.url}
@@ -253,7 +296,9 @@ const AdAbout = () => {
                 value={formData.content}
                 onChange={handleInputChange}
               />
-              {errors.content && <small className="text-danger">{errors.content}</small>}
+              {errors.content && (
+                <small className="text-danger">{errors.content}</small>
+              )}
             </div>
 
             <div className="mb-3">
@@ -263,7 +308,9 @@ const AdAbout = () => {
                 className="form-control"
                 onChange={(e) => handleImageChange(e, "section1Image")}
               />
-              {errors.section1Image && <small className="text-danger">{errors.section1Image}</small>}
+              {errors.section1Image && (
+                <small className="text-danger">{errors.section1Image}</small>
+              )}
               {formData.section1Image && (
                 <img
                   src={formData.section1Image.url}
@@ -283,7 +330,9 @@ const AdAbout = () => {
                 value={formData.section1Text}
                 onChange={handleInputChange}
               />
-              {errors.section1Text && <small className="text-danger">{errors.section1Text}</small>}
+              {errors.section1Text && (
+                <small className="text-danger">{errors.section1Text}</small>
+              )}
             </div>
 
             <div className="mb-3">
@@ -293,7 +342,9 @@ const AdAbout = () => {
                 className="form-control"
                 onChange={(e) => handleImageChange(e, "section2Image")}
               />
-              {errors.section2Image && <small className="text-danger">{errors.section2Image}</small>}
+              {errors.section2Image && (
+                <small className="text-danger">{errors.section2Image}</small>
+              )}
               {formData.section2Image && (
                 <img
                   src={formData.section2Image.url}
@@ -313,16 +364,24 @@ const AdAbout = () => {
                 value={formData.section2Text}
                 onChange={handleInputChange}
               />
-              {errors.section2Text && <small className="text-danger">{errors.section2Text}</small>}
+              {errors.section2Text && (
+                <small className="text-danger">{errors.section2Text}</small>
+              )}
             </div>
 
-            {errors.form && <small className="text-danger">{errors.form}</small>}
+            {errors.form && (
+              <small className="text-danger">{errors.form}</small>
+            )}
             <div className="d-flex justify-content-between">
               <button type="submit" className="btn btn-primary">
                 {showAddForm ? "Add" : "Update"} Changes
               </button>
               {!showAddForm && aboutData && (
-                <button type="button" className="btn btn-danger" onClick={handleDelete}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                >
                   Delete
                 </button>
               )}

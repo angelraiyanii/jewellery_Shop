@@ -234,9 +234,10 @@ export class Cart extends Component {
       return (
         <CheckoutForm
           subtotal={this.calculateSubtotal()}
-          discount={discount}
+          discount={this.state.discount}
           total={this.calculateTotal()}
-          userData={userData}
+          userData={this.state.userData}
+          cartItems={this.state.cartItems} // Add this line
         />
       );
     }
@@ -343,6 +344,7 @@ export class Cart extends Component {
 
             <div className="card">
               <div className="card-body">
+                
                 <h5 className="card-title">Order Summary</h5>
                 <hr />
                 <div className="d-flex justify-content-between">
@@ -618,7 +620,12 @@ class CheckoutForm extends Component {
   handleCheckout = async () => {
     if (this.validateForm()) {
       try {
-        const userData = localStorage.getItem("user") || localStorage.getItem("admin");
+        const userData = localStorage.getItem('user') || localStorage.getItem('admin');
+        if (!userData) {
+          alert('Please login to proceed with checkout');
+          return;
+        }
+  
         const user = JSON.parse(userData);
         const userId = user.id;
   
@@ -629,58 +636,74 @@ class CheckoutForm extends Component {
   
         if (!selectedAddress) {
           this.setState({
-            errors: { address: "Please select a shipping address" }
+            errors: { address: 'Please select a shipping address' },
           });
           return;
         }
   
-        // Get applied offer name if available
-        const appliedOffer = localStorage.getItem('appliedOffer') 
-          ? JSON.parse(localStorage.getItem('appliedOffer')).title 
-          : '';
+        // Prepare cart items
+        const cartItems = this.props.cartItems.map((item) => {
+          if (!item.productId?._id) {
+            throw new Error(
+              `Invalid product ID for item: ${item.productId?.productName || 'Unknown'}`
+            );
+          }
+          return {
+            productId: item.productId._id,
+            quantity: item.quantity,
+            price: item.productId.price,
+          };
+        });
   
-        // Format the order data
+        // Prepare order data
         const orderData = {
           userId,
-          email: selectedAddress.email,
-          phone: selectedAddress.phone,
-          address: selectedAddress.fullAddress,
-          city: selectedAddress.city,
-          state: selectedAddress.state,
-          zip: selectedAddress.zipCode,
-          totalAmount: this.props.total,
-          discount: this.props.discount,
-          offerName: appliedOffer
+          items: cartItems,
+          shippingAddress: {
+            email: selectedAddress.email || user.email || '',
+            phone: selectedAddress.phone || user.phone || '',
+            address: selectedAddress.fullAddress || '',
+            city: selectedAddress.city || '',
+            state: selectedAddress.state || '',
+            zipCode: selectedAddress.zipCode || '',
+          },
+          subtotal: parseFloat(this.props.subtotal) || 0,
+          discount: parseFloat(this.props.discount || 0),
+          total: parseFloat(this.props.total) || 0,
+          offerName: this.props.appliedOffer?.title || '',
         };
   
-        // Show loading indicator
+        // Log orderData for debugging
+        console.log('Sending order data:', JSON.stringify(orderData, null, 2));
+  
         this.setState({ isProcessing: true });
   
-        const response = await axios.post(
-          "http://localhost:5000/api/orders/create",
-          orderData
-        );
+        // Create order
+        const response = await axios.post('http://localhost:5000/api/OrderModel/create', orderData);
   
-        console.log("Order created:", response.data);
-        
-        // Clear cart and applied offer from localStorage
-        localStorage.removeItem('appliedOffer');
-        
-        // Show success message
-        alert("Order placed successfully! Your order ID is: " + response.data.orderId);
-        
-        // Redirect to order confirmation page or home
-        window.location.href = "/order-confirmation/" + response.data.orderId;
-        // Or to home page
-        // window.location.href = "/";
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Order creation failed');
+        }
+  
+        // Clear the cart after successful order creation
+        await axios.delete(`http://localhost:5000/api/CartModel/clear/${userId}`);
+  
+        // Redirect to checkout page with order ID
+        window.location.href = `/Checkout/${response.data.order._id}`;
       } catch (error) {
-        console.error("Error creating order:", error);
+        console.error('Error creating order:', {
+          message: error.message,
+          response: error.response?.data,
+        });
         this.setState({ isProcessing: false });
-        alert("Failed to place order: " + (error.response?.data?.message || error.message));
+        alert(
+          `Failed to place order: ${
+            error.response?.data?.message || error.message
+          }`
+        );
       }
     }
   };
-
   toggleAddressForm = () => {
     this.setState((prevState) => ({
       showAddressForm: !prevState.showAddressForm,
@@ -741,6 +764,7 @@ class CheckoutForm extends Component {
                       <div className="col-md-6 mb-3">
                         <label className="form-label">Email</label>
                         <input
+                          readOnly
                           type="email"
                           className={`form-control ${
                             addressErrors?.email ? "is-invalid" : ""

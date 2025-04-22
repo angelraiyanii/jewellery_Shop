@@ -166,15 +166,9 @@ const AdContact = () => {
       {/* Inquiry Details Form (Modal-style above table) */}
       {showModal && selectedInquiry && (
         <div className="card shadow-lg mb-4 border-primary">
-          <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Inquiry Details</h5>
-            <button
-              className="btn btn-sm btn-light"
-              onClick={() => setShowModal(false)}
-            >
-              ✖
-            </button>
-          </div>
+          <u>
+            <h2 className="text-center ">Inquiry Details📑</h2>
+          </u>
           <div className="card-body">
             <p>
               <strong>Name:</strong> {selectedInquiry.name || "N/A"}
