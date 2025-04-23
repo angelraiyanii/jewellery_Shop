@@ -85,10 +85,13 @@ router.get('/:orderId', async (req, res) => {
       });
     }
 
-    const order = await Order.findById(orderId)
-      .populate('userId', 'fullname email') // Changed 'name' to 'fullname'
-      .populate('items.productId', 'productName price productImage');
-
+    // Log each step for debugging
+    console.log('Attempting to find order in database');
+    
+    const order = await Order.findById(orderId);
+    
+    console.log('Raw order result:', order);
+    
     if (!order) {
       console.log('Order not found:', orderId);
       return res.status(404).json({
@@ -97,13 +100,33 @@ router.get('/:orderId', async (req, res) => {
       });
     }
 
-    console.log('Order found:', order._id);
+    // Try population in separate steps for debugging
+    console.log('Found order, now attempting to populate references');
+    
+    try {
+      await order.populate('userId', 'fullname email');
+      console.log('User populated successfully');
+    } catch (populateError) {
+      console.error('Error populating user:', populateError);
+      // Continue without user population
+    }
+    
+    try {
+      await order.populate('items.productId', 'productName price productImage');
+      console.log('Products populated successfully');
+    } catch (populateError) {
+      console.error('Error populating products:', populateError);
+      // Continue without product population
+    }
+
+    console.log('Order successfully processed:', order._id);
     res.status(200).json({
       success: true,
       order: order,
     });
   } catch (error) {
-    console.error('Error finding order:', error, error.stack);
+    console.error('Error finding order:', error.message);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch order',

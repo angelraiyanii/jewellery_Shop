@@ -37,7 +37,7 @@ const AdReviews = () => {
             },
           }
         );
-        console.log("Reviews fetched:", response.data); // Debug
+        console.log("Reviews fetched:", response.data);
         setReviews(response.data);
         setError(null);
       } catch (error) {
@@ -45,9 +45,6 @@ const AdReviews = () => {
         const errorMsg =
           error.response?.data?.error || "Failed to load reviews.";
         setError(errorMsg);
-        if (error.response?.status === 401) {
-          setTimeout(() => navigate("/login"), 2000);
-        }
       } finally {
         setLoading(false);
       }

@@ -6,8 +6,12 @@ const AdOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [amountSearch, setAmountSearch] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(5);
 
   // useEffect
   useEffect(() => {
@@ -47,8 +51,9 @@ const AdOrder = () => {
     setSelectedOrderId(selectedOrderId === orderId ? null : orderId);
   };
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+  const handleAmountSearchChange = (e) => {
+    setAmountSearch(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const getUserInfo = (order) => {
@@ -80,32 +85,49 @@ const AdOrder = () => {
     return order.total || 0;
   };
 
+  // Filter orders by amount
   const filteredOrders = orders.filter((order) => {
-    const userInfo = getUserInfo(order).toLowerCase();
-    const productInfo = getProductInfo(order).toLowerCase();
-    const orderId = (order._id || "").toString();
+    const orderAmount = getOrderAmount(order).toString();
 
-    return (
-      userInfo.includes(searchTerm.toLowerCase()) ||
-      productInfo.includes(searchTerm.toLowerCase()) ||
-      orderId.includes(searchTerm)
-    );
+    if (!amountSearch) {
+      return true;
+    }
+
+    return orderAmount.includes(amountSearch);
   });
+
+  // Pagination logic
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+  // Generate page numbers
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="container mt-4">
-      <h2 className="text-center mb-4">Orders</h2>
+      <h2 className="text-center mb-4">Orders Manage</h2>
 
       <div className="d-flex justify-content-end mb-3">
         <div className="d-flex">
           <input
             type="text"
             className="form-control me-2"
-            placeholder="Search orders..."
-            value={searchTerm}
-            onChange={handleSearchChange}
+            placeholder="🔎Search by amount..."
+            value={amountSearch}
+            onChange={handleAmountSearchChange}
           />
-          <button className="btn btn-primary">Search</button>
         </div>
       </div>
 
@@ -137,7 +159,7 @@ const AdOrder = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order) => (
+            {currentOrders.map((order) => (
               <React.Fragment key={order._id}>
                 <tr>
                   <td>{order._id}</td>
@@ -270,6 +292,58 @@ const AdOrder = () => {
             ))}
           </tbody>
         </table>
+      )}
+      {/* Pagination */}
+      {filteredOrders.length > 0 && (
+        <div className="row mt-3">
+          <div className="col-md-12 d-flex justify-content-center">
+            <nav>
+              <ul className="pagination">
+                <li
+                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    « Prev
+                  </button>
+                </li>
+
+                {pageNumbers.map((number) => (
+                  <li
+                    key={number}
+                    className={`page-item ${
+                      currentPage === number ? "active" : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link"
+                      onClick={() => handlePageChange(number)}
+                    >
+                      {number}
+                    </button>
+                  </li>
+                ))}
+
+                <li
+                  className={`page-item ${
+                    currentPage === totalPages ? "disabled" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next »
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
       )}
     </div>
   );

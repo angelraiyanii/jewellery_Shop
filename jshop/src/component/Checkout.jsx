@@ -16,9 +16,16 @@ class CheckOut extends Component {
 
   componentDidMount() {
     const { orderId } = this.props.params;
-    this.setState({ orderId }, () => {
-      this.fetchOrderDetails(orderId);
-    });
+    if (orderId) {
+      this.setState({ orderId }, () => {
+        this.fetchOrderDetails(orderId);
+      });
+    } else {
+      this.setState({
+        errors: { fetchError: "Order ID is missing from URL" },
+        isLoading: false,
+      });
+    }
   }
 
   fetchOrderDetails = async (orderId) => {
@@ -28,7 +35,10 @@ class CheckOut extends Component {
         throw new Error("Order ID is missing");
       }
 
-      const response = await axios.get(`http://localhost:5000/api/OrderModel/${orderId}`);
+      // Make sure your backend API route matches this URL
+      const response = await axios.get(
+        `http://localhost:5000/api/OrderModel/${orderId}`
+      );
       console.log("Order response:", response.data);
 
       if (!response.data.success) {
@@ -43,17 +53,23 @@ class CheckOut extends Component {
     } catch (error) {
       console.error("Error fetching order details:", error);
       let errorMessage = "Failed to load order details";
+
       if (error.response) {
         if (error.response.status === 400) {
           errorMessage = "Invalid order ID format";
         } else if (error.response.status === 404) {
           errorMessage = "Order not found";
+        } else if (error.response.status === 500) {
+          errorMessage = "Server error. Please try again later.";
         } else {
           errorMessage = error.response.data.message || error.message;
         }
+      } else if (error.request) {
+        errorMessage = "No response from server. Please check your connection.";
       } else {
         errorMessage = error.message;
       }
+
       this.setState({
         errors: { fetchError: errorMessage },
         isLoading: false,
@@ -67,7 +83,10 @@ class CheckOut extends Component {
     if (isLoading) {
       return (
         <div className="container mt-5 text-center">
-          Loading order details...
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading order details...</span>
+          </div>
+          <p className="mt-2">Loading order details...</p>
         </div>
       );
     }
@@ -121,15 +140,17 @@ class CheckOut extends Component {
                 <p>₹{orderDetails.total.toFixed(2)}</p>
               </div>
               <hr />
-              <h6>Shipping Address</h6>
-              <p>{orderDetails.shippingAddress.address}</p>
+              <b><h6>Shipping Address</h6></b>
               <p>
+                {orderDetails.shippingAddress.address} {" | "}
                 {orderDetails.shippingAddress.city},{" "}
                 {orderDetails.shippingAddress.state} -{" "}
                 {orderDetails.shippingAddress.zipCode}
               </p>
-              <p>Email: {orderDetails.shippingAddress.email}</p>
-              <p>Phone: {orderDetails.shippingAddress.phone}</p>
+              <p>
+                Email: {orderDetails.shippingAddress.email} {" | "}Phone:{" "}
+                {orderDetails.shippingAddress.phone}
+              </p>
             </div>
           )}
 
@@ -143,9 +164,7 @@ class CheckOut extends Component {
             />
           </div>
 
-          <button className="btn btn-success w-100" disabled>
-            Payment Processing
-          </button>
+          <button className="btn btn-success w-100">Proceed to Payment</button>
 
           <div className="mt-3 text-center">
             <Link to="/" className="btn btn-primary">
@@ -158,9 +177,9 @@ class CheckOut extends Component {
   }
 }
 
-function CheckOutWithParams(props) {
+function Checkout(props) {
   const params = useParams();
   return <CheckOut {...props} params={params} />;
 }
 
-export default CheckOutWithParams;
+export default Checkout;
