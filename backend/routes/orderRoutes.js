@@ -84,7 +84,38 @@ router.get('/:orderId', async (req, res) => {
         message: 'Invalid order ID format',
       });
     }
-
+// Get orders by user ID
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Validate userId format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID format'
+      });
+    }
+    
+    // Find all orders for this user, sorted by creation date (newest first)
+    const orders = await Order.find({ userId })
+      .populate('items.productId', 'productName price productImage')
+      .sort({ createdAt: -1 });
+      
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders
+    });
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user orders',
+      error: error.message
+    });
+  }
+});
     // Log each step for debugging
     console.log('Attempting to find order in database');
     

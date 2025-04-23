@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 class CheckOut extends Component {
@@ -76,9 +76,11 @@ class CheckOut extends Component {
       });
     }
   };
+
   handlePayment = async () => {
     try {
       const { netPayable, orderDetails } = this.state;
+      const { navigate } = this.props;
 
       // Create order on backend
       const response = await axios.post(
@@ -93,18 +95,40 @@ class CheckOut extends Component {
       const { order } = response.data;
 
       const options = {
-        key: "rzp_test_yCgrsfXSuM7SxL", // replace with your Razorpay key
+        key: "rzp_test_yCgrsfXSuM7SxL",
         amount: order.amount,
         currency: order.currency,
-        name: "Your Store Name",
+        name: "Jewellery Shop",
         description: "Order Payment",
         order_id: order.id,
-        handler: (response) => {
-          // Handle success - save response to MongoDB if needed
-          alert("Payment successful!");
-          console.log(response);
+        handler: async (response) => {
+          try {
+            // Send payment verification data to server
+            const verificationResponse = await axios.post(
+              "http://localhost:5000/api/payment/verify-payment",
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                receipt: orderDetails._id, // Pass the order ID as receipt
+              }
+            );
 
-          // You can send the payment response to your backend to verify it
+            if (verificationResponse.data.success) {
+              alert(
+                "Payment successful! Your order status has been updated to delivered."
+              );
+              // Redirect to order history page
+              navigate("/OrderHistory");
+            } else { 
+              alert("Payment verification failed. Please contact support.");
+            }
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            alert(
+              "Payment verification failed. Please try again or contact support."
+            );
+          }
         },
         prefill: {
           name: orderDetails.shippingAddress.name,
@@ -233,7 +257,8 @@ class CheckOut extends Component {
 
 function Checkout(props) {
   const params = useParams();
-  return <CheckOut {...props} params={params} />;
+  const navigate = useNavigate();
+  return <CheckOut {...props} params={params} navigate={navigate} />;
 }
 
 export default Checkout;

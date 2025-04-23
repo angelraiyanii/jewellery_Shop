@@ -236,7 +236,7 @@ export class Product extends Component {
                         <FaInfoCircle className="info-icon" />
                       </Link>
                       <h4>{product.productName}</h4>
-                      <p>${product.price}</p>
+                      <p>₹{product.price}</p>
                       <button
                         className="btn btn-primary"
                         onClick={() => this.addToCart(product._id)}

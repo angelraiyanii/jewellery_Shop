@@ -24,15 +24,14 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
- 
   useEffect(() => {
     const userRole =
       localStorage.getItem("user") || localStorage.getItem("admin");
     if (userRole) {
-      setUser(JSON.parse(userRole)); 
+      setUser(JSON.parse(userRole));
     }
   }, []);
 
@@ -269,14 +268,6 @@ const Navbar = () => {
                       to="/Cart"
                     >
                       <FaShoppingCart className="me-2 text-primary" /> Cart
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      className="dropdown-item d-flex align-items-center"
-                      to="/Checkout"
-                    >
-                      <FaCreditCard className="me-2 text-danger" /> Checkout
                     </Link>
                   </li>
                   <li>
