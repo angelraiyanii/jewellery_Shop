@@ -55,6 +55,11 @@ router.use('/OrderModel',orderRouttes);
 const reviewRouttes = require('./reviewRouter');
 router.use('/ReviewModel', reviewRouttes);
 
+//RazorPay
+const razorpayRoutes = require('./razorpayRoutes');
+router.use('/payment', razorpayRoutes);
+
+
 router.use((req, res) => {
   res.status(404).json({ error: "Route not found." });
 });

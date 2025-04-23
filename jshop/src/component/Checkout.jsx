@@ -76,6 +76,53 @@ class CheckOut extends Component {
       });
     }
   };
+  handlePayment = async () => {
+    try {
+      const { netPayable, orderDetails } = this.state;
+
+      // Create order on backend
+      const response = await axios.post(
+        "http://localhost:5000/api/payment/create-order",
+        {
+          amount: netPayable,
+          currency: "INR",
+          receipt: orderDetails._id,
+        }
+      );
+
+      const { order } = response.data;
+
+      const options = {
+        key: "rzp_test_yCgrsfXSuM7SxL", // replace with your Razorpay key
+        amount: order.amount,
+        currency: order.currency,
+        name: "Your Store Name",
+        description: "Order Payment",
+        order_id: order.id,
+        handler: (response) => {
+          // Handle success - save response to MongoDB if needed
+          alert("Payment successful!");
+          console.log(response);
+
+          // You can send the payment response to your backend to verify it
+        },
+        prefill: {
+          name: orderDetails.shippingAddress.name,
+          email: orderDetails.shippingAddress.email,
+          contact: orderDetails.shippingAddress.phone,
+        },
+        theme: {
+          color: "#3399cc",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment failed:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
 
   render() {
     const { orderDetails, isLoading, errors, netPayable } = this.state;
@@ -140,7 +187,9 @@ class CheckOut extends Component {
                 <p>₹{orderDetails.total.toFixed(2)}</p>
               </div>
               <hr />
-              <b><h6>Shipping Address</h6></b>
+              <b>
+                <h6>Shipping Address</h6>
+              </b>
               <p>
                 {orderDetails.shippingAddress.address} {" | "}
                 {orderDetails.shippingAddress.city},{" "}
@@ -164,7 +213,12 @@ class CheckOut extends Component {
             />
           </div>
 
-          <button className="btn btn-success w-100">Proceed to Payment</button>
+          <button
+            className="btn btn-success w-100"
+            onClick={this.handlePayment}
+          >
+            Proceed to Payment
+          </button>
 
           <div className="mt-3 text-center">
             <Link to="/" className="btn btn-primary">
