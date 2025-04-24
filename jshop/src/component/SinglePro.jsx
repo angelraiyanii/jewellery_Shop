@@ -32,7 +32,8 @@ class SingleProClass extends Component {
         review: "",
       },
       isEditingReview: false,
-      reviewError: null, // Added for review error display
+      reviewError: null,
+      hasOrderedProduct: false, // New state to track if user ordered the product
     };
   }
 
@@ -40,6 +41,7 @@ class SingleProClass extends Component {
     this.fetchProduct();
     this.fetchProductRating();
     this.fetchUserReview();
+    this.checkUserOrder(); // Check if user ordered the product
   }
 
   componentDidUpdate(prevProps) {
@@ -47,8 +49,41 @@ class SingleProClass extends Component {
       this.fetchProduct();
       this.fetchProductRating();
       this.fetchUserReview();
+      this.checkUserOrder();
     }
   }
+
+  // New method to check if the user has ordered the product
+  checkUserOrder = async () => {
+    const { productId } = this.props;
+    const userData = localStorage.getItem("user") || localStorage.getItem("admin");
+  
+    if (!userData) {
+      this.setState({ hasOrderedProduct: false });
+      return;
+    }
+  
+    let user;
+    try {
+      user = JSON.parse(userData);
+      const userId = user.id;
+  
+      // Use the existing endpoint
+      const response = await axios.get(
+        `http://localhost:5000/api/OrderModel/user/${userId}`
+      );
+  
+      // Check if any order contains the productId in its items
+      const hasOrdered = response.data.orders.some((order) =>
+        order.items.some((item) => item.productId._id === productId)
+      );
+  
+      this.setState({ hasOrderedProduct: hasOrdered });
+    } catch (error) {
+      console.error("Error checking user order:", error);
+      this.setState({ hasOrderedProduct: false });
+    }
+  };
 
   fetchProduct = async () => {
     const { productId } = this.props;
@@ -90,16 +125,9 @@ class SingleProClass extends Component {
     try {
       const user = JSON.parse(userData);
       const userId = user.id;
-      console.log(
-        "Fetching user review for productId:",
-        productId,
-        "userId:",
-        userId
-      ); // Debug
       const response = await axios.get(
         `http://localhost:5000/api/ReviewModel/product/${productId}`
       );
-      console.log("User review response:", response.data); // Debug
       const userReview = response.data.find(
         (review) => review.userId._id === userId
       );
@@ -118,7 +146,7 @@ class SingleProClass extends Component {
     } catch (error) {
       console.error("Error fetching user review:", error);
       if (error.response?.status === 404) {
-        this.setState({ reviewError: null }); // No reviews, not an error
+        this.setState({ reviewError: null });
       } else {
         this.setState({
           reviewError: `Failed to fetch reviews: ${
@@ -147,7 +175,6 @@ class SingleProClass extends Component {
     let user;
     try {
       user = JSON.parse(userData);
-      console.log("addToCart user:", user, "token:", token);
     } catch (error) {
       console.error("Invalid user data in localStorage:", error);
       alert("Session invalid. Please log in again.");
@@ -200,7 +227,6 @@ class SingleProClass extends Component {
     let user;
     try {
       user = JSON.parse(userData);
-      console.log("addToWishlist user:", user, "token:", token);
     } catch (error) {
       console.error("Invalid user data in localStorage:", error);
       alert("Session invalid. Please log in again.");
@@ -276,7 +302,6 @@ class SingleProClass extends Component {
     let user;
     try {
       user = JSON.parse(userData);
-      console.log("submitReview user:", user, "token:", token);
     } catch (error) {
       console.error("Invalid user data in localStorage:", error);
       alert("Session invalid. Please log in again.");
@@ -336,7 +361,6 @@ class SingleProClass extends Component {
     let user;
     try {
       user = JSON.parse(userData);
-      console.log("deleteReview user:", user, "token:", token);
     } catch (error) {
       console.error("Invalid user data in localStorage:", error);
       alert("Session invalid. Please log in again.");
@@ -415,6 +439,7 @@ class SingleProClass extends Component {
       reviewForm,
       isEditingReview,
       reviewError,
+      hasOrderedProduct,
     } = this.state;
     const { productId } = this.props;
 
@@ -632,8 +657,8 @@ class SingleProClass extends Component {
             </div>
           </div>
 
-          {/* Review Submission Form */}
-          {isLoggedIn && (
+          {/* Review Submission Form - Conditional Rendering */}
+          {isLoggedIn && hasOrderedProduct ? (
             <div className="mt-5">
               <h4>
                 {userReview && !isEditingReview
@@ -711,6 +736,18 @@ class SingleProClass extends Component {
                   </button>
                 </div>
               )}
+            </div>
+          ) : isLoggedIn ? (
+            <div className="mt-5">
+              <p className="text-muted">
+                You need to purchase this product to submit a review.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5">
+              <p className="text-muted">
+                Please log in to submit a review for this product.
+              </p>
             </div>
           )}
         </div>

@@ -133,5 +133,27 @@ router.get('/', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch orders', error: error.message });
   }
 });
+// Get orders by user ID (new endpoint to match frontend)
+router.get('/orders/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid user ID format' });
+    }
+
+    const orders = await Order.find({ userId })
+      .populate('items.productId', 'productName price productImage')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch user orders', error: error.message });
+  }
+});
 module.exports = router;
