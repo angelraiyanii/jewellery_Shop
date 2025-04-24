@@ -57,8 +57,14 @@ const AdOrder = () => {
   };
 
   const getUserInfo = (order) => {
-    if (order.userId && typeof order.userId === "object" && order.userId.name) {
-      return order.userId.name;
+    if (
+      order.userId &&
+      typeof order.userId === "object" &&
+      order.userId.fullname
+    ) {
+      return order.userId.fullname;
+
+     // return order.userId.name;
     } else if (order.userId && typeof order.userId === "string") {
       return `${order.userId.substring(0, 8)}...`;
     }

@@ -114,7 +114,12 @@ router.get('/user/:userId', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const orders = await Order.find()
-      .populate('userId', 'name email')
+    .populate({
+      path: 'userId',
+      model: 'Login',
+      select: 'fullname email',
+    })
+    
       .populate('items.productId', 'productName price productImage')
       .sort({ createdAt: -1 });
 
